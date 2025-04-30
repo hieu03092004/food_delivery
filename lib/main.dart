@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:food_delivery/pages/bottomnav.dart';
 import 'package:food_delivery/pages/home.dart';
+import 'package:food_delivery/pages/shipper_pages/Bottom_nav_shipper.dart';
 
+import 'config/database.dart';
 import 'pages/onboarding.dart';
 
-void main() {
+void main()async{
+  await Database.init();
   runApp(const MyApp());
 }
 
@@ -21,7 +24,7 @@ class MyApp extends StatelessWidget {
 
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: BottomNav(),
+      home: BottomNavShipper(),
     );
   }
 }
