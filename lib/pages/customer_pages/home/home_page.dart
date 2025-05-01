@@ -7,7 +7,7 @@ class HomePages extends StatelessWidget {
   Widget build(BuildContext context) {
     return  Scaffold(
       body: Center(
-        child: Text("Trang chủ của shipper"),
+        child: Text("Trang chủ của khách hàng"),
       ),
     );
   }

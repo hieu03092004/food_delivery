@@ -1,43 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:food_delivery/pages/order.dart';
-import 'package:food_delivery/pages/profile.dart';
-import 'package:food_delivery/pages/wallet.dart';
+import 'package:food_delivery/pages/customer_pages/home/home_page.dart';
 
-import 'home.dart';
-
-class BottomNav extends StatefulWidget {
-  const BottomNav({Key? key}) : super(key: key);
+import '../../config/database.dart';
+class BottomCustomerNav extends StatefulWidget {
+  const BottomCustomerNav({super.key});
 
   @override
-  _BottomNavState createState() => _BottomNavState();
+  State<BottomCustomerNav> createState() => _BottomCustomerNavState();
 }
 
-class _BottomNavState extends State<BottomNav> {
+class _BottomCustomerNavState extends State<BottomCustomerNav> {
   late List<Widget>pages;
-  late Home HomePage;
-  late Order order;
-  late Wallet wallet;
-  late Profile profile;
+  late HomePages HomePage;
   int currentTabIndex=0;
-
-
-  // Nếu bạn có các trang tương ứng với mỗi mục:
-  // final List<Widget> _pages = [
-  //   HomePage(),
-  //   SmsPage(),
-  //   PhonePage(),
-  // ];
   @override
-  void initState() {
+  void initState(){
     // TODO: implement initState
-    HomePage=Home();
-    order=Order();
-    wallet=Wallet();
-    profile=Profile();
-    pages=[HomePage,order,wallet,profile];
+    HomePage=HomePages();
+    pages=[HomePage];
     super.initState();
+    Database.init();
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,11 +40,7 @@ class _BottomNavState extends State<BottomNav> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_bag),
-            label: 'Giỏ hàng',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.wallet),
-            label: 'Thanh Toán',
+            label: 'Đơn hàng',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.notifications),

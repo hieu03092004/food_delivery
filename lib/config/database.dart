@@ -1,8 +1,8 @@
 // lib/database.dart
 import 'package:supabase_flutter/supabase_flutter.dart';
 class Database {
-  static const _url = 'https://txpmsjheryxladcdbiko.supabase.co';
-  static const _anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4cG1zamhlcnl4bGFkY2RiaWtvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIzNzYxNzUsImV4cCI6MjA1Nzk1MjE3NX0.dqmOim72aohR4mW3eHKuWQxHC_w2JTGLDIpM4C9okwk';
+  static const _url = 'https://xfxmyhnkchzoyzzpjctl.supabase.co';
+  static const _anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmeG15aG5rY2h6b3l6enBqY3RsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwODc5OTcsImV4cCI6MjA2MTY2Mzk5N30.XZipF1i2Y1BZkWQu0dxuDK6kFQfWdkZMXGk6nVWJMzM';
 
   /// Gọi hàm này trước runApp()
   static Future<void> init() async {
@@ -23,10 +23,10 @@ class Database {
   static SupabaseClient get client => Supabase.instance.client;
   static Future<void> fetchFruits() async {
     try {
-      final response = await client.from('Fruit').select('*');
-      print('🍓 List of fruits:');
-      for (var fruit in response) {
-        print(fruit);
+      final response = await client.from('account').select('*');
+      print('🍓 List of account:');
+      for (var account in response) {
+        print(account);
       }
     } catch (e) {
       print('❌ Error fetching fruits: $e');
