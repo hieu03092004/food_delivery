@@ -10,12 +10,15 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'config/database.dart';
 void main()async{
+  print("🔄 Bắt đầu initialize Firebase");
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  print("✅ Firebase đã initialize xong");
   await Database.init();
+  print("✅ Database đã init xong");
   runApp(const App());
 }
 class App extends StatefulWidget {
@@ -61,7 +64,10 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const LoginPage(),
-        '/adminHome': (context) => const BottomNavAdmin(),
+        '/adminHome': (context) {
+          final storeId = ModalRoute.of(context)!.settings.arguments as int;
+          return BottomNavAdmin(storeId: storeId);
+        },
         '/shipperHome': (context) => const BottomNavShipper(),
         '/customerHome': (context) => const BottomCustomerNav(),
       },

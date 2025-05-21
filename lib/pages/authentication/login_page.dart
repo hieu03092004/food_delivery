@@ -50,19 +50,22 @@ class _LoginViewState extends State<LoginView> {
     return BlocListener<LoginCubit, LoginState>(
       listener: (context, state) {
         if (state is LoginSuccess) {
-          print('Đăng nhập thành công với roleId: ${state.roleId}, storeId: ${state.storeId}');
-          switch (state.roleId) {
-            case 1:
-              Navigator.pushReplacementNamed(context, '/adminHome');
-              break;
-            case 2:
+          print('Đăng nhập thành công với roleName: ${state.roleName}, storeId: ${state.storeId}');
+          switch (state.roleName) {
+            case 'admin':
               Navigator.pushReplacementNamed(
                 context,
-                '/shipperHome',
+                '/adminHome',
                 arguments: state.storeId,
               );
               break;
-            case 3:
+            case 'shipper':
+              Navigator.pushReplacementNamed(
+                context,
+                '/shipperHome',
+              );
+              break;
+            case 'customer':
             default:
               Navigator.pushReplacementNamed(context, '/customerHome');
           }
@@ -281,8 +284,13 @@ class _LoginViewState extends State<LoginView> {
     final loginCubit=BlocProvider.of<LoginCubit>(context);
     final email=_emailTextController.text;
     final password=_passwordTextController.text;
+    print(email);
+    print(password);
     loginCubit.login(email, password);
+    // print(email);
+    // print(password);
     return;
+
     final isValid=_formKey.currentState?.validate()??false;
     if(isValid){
       //Call API login,Call fireBaseLogin

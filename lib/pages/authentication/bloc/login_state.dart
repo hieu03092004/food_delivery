@@ -14,12 +14,12 @@ class LoginLoading extends LoginState {
 }
 
 class LoginSuccess extends LoginState {
-  final int roleId;
+  final String roleName;
   final int? storeId;
-  const LoginSuccess(this.roleId, this.storeId);
+  const LoginSuccess(this.roleName, this.storeId);
 
   @override
-  List<Object?> get props => [roleId, storeId];
+  List<Object?> get props => [roleName, storeId];
 }
 
 class LoginFailure extends LoginState {

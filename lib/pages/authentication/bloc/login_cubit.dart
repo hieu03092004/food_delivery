@@ -16,11 +16,11 @@ class LoginCubit extends Cubit<LoginState> {
   Future<void> login(String email, String password) async {
     emit(const LoginLoading());
     try {
+      print("DO login Cubit");
       final AuthResult result = await _authRepo
           .loginWithEmailAndPassword(email: email, password: password);
-
       // emit success with role & store
-      emit(LoginSuccess(result.roleId, result.storeId));
+      emit(LoginSuccess(result.roleName, result.storeId));
     } catch (e) {
       emit(LoginFailure(e.toString()));
     }
