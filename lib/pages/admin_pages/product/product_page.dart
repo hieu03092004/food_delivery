@@ -20,7 +20,9 @@ class ProductPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sản phẩm theo danh mục')),
+      appBar: AppBar(title:
+        Text("Sản phẩm theo danh mục")
+      ),
       body: StreamBuilder<List<Product>>(
         stream: ProductSnapshot.getProductStream(),
         builder: (context, snapshot) {
@@ -105,7 +107,7 @@ class ProductPage extends StatelessWidget {
                                 height: 50,
                                 fit: BoxFit.cover,
                               )
-                                  : const Icon(Icons.fastfood, size: 40),
+                                  : Icon(Icons.fastfood, size: 40),
                               title: Text(
                                 product.name,
                                 style: TextStyle(
@@ -138,7 +140,7 @@ class ProductPage extends StatelessWidget {
                                     ),
                                     Text(
                                       '${_getDiscountedPrice(product.price, product.discountPercent)} ${product.unit}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         color: Colors.red,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 14,
@@ -146,12 +148,12 @@ class ProductPage extends StatelessWidget {
                                     ),
                                     Text(
                                       '-${product.discountPercent.toStringAsFixed(0)}%',
-                                      style: const TextStyle(color: Colors.red, fontSize: 12),
+                                      style: TextStyle(color: Colors.red, fontSize: 12),
                                     ),
                                   ] else
                                     Text(
                                       '${product.price.toStringAsFixed(0)} ${product.unit}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
                                       ),

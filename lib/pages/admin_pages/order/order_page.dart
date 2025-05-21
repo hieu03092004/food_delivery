@@ -22,7 +22,7 @@ class OrdersPage extends StatelessWidget {
       length: orderStatuses.length,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Đơn hàng'),
+          title: Text("Đơn hàng"),
           bottom: TabBar(
             isScrollable: true,
             tabs: orderStatuses.values.map((e) {
@@ -49,10 +49,10 @@ class OrderListTab extends StatelessWidget {
   final int storeId;
 
   const OrderListTab({
-    Key? key,
+    super.key,
     required this.status,
     required this.storeId,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +70,7 @@ class OrderListTab extends StatelessWidget {
                 .toList();
 
             if (orders.isEmpty) {
-              return const Center(child: Text('Không có đơn hàng.'));
+              return Center(child: Text('Không có đơn hàng.'));
             }
 
             return ListView.builder(
@@ -86,7 +86,7 @@ class OrderListTab extends StatelessWidget {
                       'Ngày: ${order.orderDate.toLocal().toString().split(' ')[0]} - '
                           '${order.items.length} sản phẩm',
                     ),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    trailing: Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
                       Navigator.push(
                         context,

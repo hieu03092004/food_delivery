@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../model/admin_model/product_model.dart';
 
 class PageProductDetail extends StatelessWidget {
-  const PageProductDetail({super.key, required this.product});
+  PageProductDetail({super.key, required this.product});
   final Product product;
 
   @override
@@ -30,50 +30,50 @@ class PageProductDetail extends StatelessWidget {
                       product.thumbnailUrl,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) =>
-                      const Icon(Icons.broken_image, size: 100),
+                      Icon(Icons.broken_image, size: 100),
                     ),
                   )
                 ),
               )
             else
-              const Center(child: Icon(Icons.fastfood, size: 100)),
+              Center(child: Icon(Icons.fastfood, size: 100)),
 
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
 
             /// Tên sản phẩm
             Center(
               child: Text(
                 product.name,
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
             ),
 
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             if (product.description.isNotEmpty)
               Text(
                 product.description,
-                style: const TextStyle(fontSize: 16),
+                style: TextStyle(fontSize: 16),
               ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Text('Danh mục: ${product.categoryName}'),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text('Đơn vị: ${product.unit}'),
 
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             if (product.discountPercent > 0) ...[
               Text(
                 'Giá gốc: ${product.price.toStringAsFixed(0)} ${product.unit}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   decoration: TextDecoration.lineThrough,
                   color: Colors.grey,
                 ),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
                 'Giá khuyến mãi: $discountedPrice ${product.unit}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 20,
                   color: Colors.red,
                   fontWeight: FontWeight.bold,
@@ -81,12 +81,12 @@ class PageProductDetail extends StatelessWidget {
               ),
               Text(
                 '-${product.discountPercent.toStringAsFixed(0)}%',
-                style: const TextStyle(color: Colors.red),
+                style: TextStyle(color: Colors.red),
               ),
             ] else
               Text(
                 'Giá: ${product.price.toStringAsFixed(0)} ${product.unit}',
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
           ],
         ),

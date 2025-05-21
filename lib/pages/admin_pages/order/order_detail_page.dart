@@ -42,10 +42,10 @@ class OrderDetailPage extends StatelessWidget {
   }
   @override
   Widget build(BuildContext context) {
-    print('🔍 order.status: ${order.status}');
+    print('order.status: ${order.status}');
     return Scaffold(
       appBar: AppBar(
-        title: Text('Đơn hàng ${order.orderId}'),
+        title: Text("Đơn hàng ${order.orderId}"),
         actions: <Widget>[
           if ((order.status ?? '').toLowerCase() == 'pending') ...[
             IconButton(
@@ -72,7 +72,7 @@ class OrderDetailPage extends StatelessWidget {
             child: ListView.separated(
               padding: const EdgeInsets.all(12),
               itemCount: order.items.length,
-              separatorBuilder: (_, __) => const Divider(),
+              separatorBuilder: (_, __) => Divider(),
               itemBuilder: (context, index) {
                 final item = order.items[index];
                 final price = item.product.discountPercent > 0
@@ -136,7 +136,7 @@ class OrderDetailPage extends StatelessWidget {
             ),
           ),
           Text(
-            '${value.toStringAsFixed(0)} đ',
+            '${value.toStringAsFixed(0)} VND',
             style: TextStyle(
               fontSize: isTotal ? 16 : 14,
               color: isTotal ? Colors.red : Colors.black87,

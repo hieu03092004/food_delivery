@@ -5,14 +5,9 @@ import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AssignShipperPage extends StatelessWidget {
+  const AssignShipperPage({super.key, required this.storeId, required this.orderId,});
   final int storeId;
   final int orderId;
-
-  const AssignShipperPage({
-    super.key,
-    required this.storeId,
-    required this.orderId,
-  });
 
   Future<List<dynamic>> _fetchShippers() async {
     final response = await Supabase.instance.client
@@ -27,7 +22,7 @@ class AssignShipperPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Phân công shipper'),
+        title: Text("Phân công shipper"),
       ),
       body: FutureBuilder<List<dynamic>>(
         future: _fetchShippers(),
@@ -38,7 +33,7 @@ class AssignShipperPage extends StatelessWidget {
 
           if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
             return Center(
-              child: Text('Không có shipper nào khả dụng.', style: TextStyle(fontSize: 16)),
+              child: Text("Không có shipper nào khả dụng.", style: TextStyle(fontSize: 16)),
             );
           }
 
@@ -66,16 +61,16 @@ class AssignShipperPage extends StatelessWidget {
                     child: account['avatar_url'] == null || account['avatar_url'].toString().isEmpty
                         ? Text(
                       account['full_name'].toString().substring(0, 1).toUpperCase(),
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                     )
                         : null,
                   ),
 
                   title: Text(
                     account['full_name'],
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                    style: TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
+                  trailing: Icon(Icons.arrow_forward_ios_rounded, size: 18),
                   onTap: () async {
 
                     await Supabase.instance.client
@@ -119,28 +114,28 @@ class AssignShipperPage extends StatelessWidget {
                       // Kiểm tra trạng thái HTTP response
                       if (response.statusCode >= 200 && response.statusCode < 300) {
                         // Thành công - mã trạng thái 2xx
-                        print('📦 Gửi FCM thành công: ${response.body}');
+                        print('Gửi FCM thành công: ${response.body}');
 
                         // Nếu cần phân tích thêm nội dung phản hồi JSON
                         try {
                           final responseData = jsonDecode(response.body);
                           // Xử lý dữ liệu phản hồi nếu cần
-                          print('📦 Chi tiết phản hồi: $responseData');
+                          print('Chi tiết phản hồi: $responseData');
                         } catch (jsonError) {
-                          print('⚠️ Lỗi phân tích JSON phản hồi: $jsonError');
+                          print('Lỗi phân tích JSON phản hồi: $jsonError');
                         }
                       } else {
                         // Thất bại - mã trạng thái không phải 2xx
-                        print('⚠️ Gửi FCM thất bại: ${response.statusCode} - ${response.body}');
+                        print('Gửi FCM thất bại: ${response.statusCode} - ${response.body}');
                       }
                     } catch (httpError) {
                       // Bắt lỗi khi gửi request HTTP (lỗi kết nối, timeout, v.v.)
-                      print('❌ Lỗi kết nối khi gửi FCM: $httpError');
+                      print('Lỗi kết nối khi gửi FCM: $httpError');
                     }
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('✅ Đã phân công đơn cho shipper'),
+                          content: Text("Đã phân công đơn cho shipper"),
                           duration: Duration(seconds: 3),
                         ),
                       );

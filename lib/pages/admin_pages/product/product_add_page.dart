@@ -9,7 +9,7 @@ import '../../../permission/permission_helper.dart';
 import '../supabase_helper.dart';
 
 class PageAddProduct extends StatefulWidget {
-  const PageAddProduct({super.key, required this.storeId});
+  PageAddProduct({super.key, required this.storeId});
   final int storeId;
 
   @override
@@ -63,7 +63,7 @@ class _PageAddProductState extends State<PageAddProduct> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Thêm sản phẩm"),
+        title: Text("Thêm sản phẩm"),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: SingleChildScrollView(
@@ -106,14 +106,14 @@ class _PageAddProductState extends State<PageAddProduct> {
             // Trường nhập liệu cho "Tên sản phẩm"
             TextFormField(
               controller: txtTen,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: "Tên sản phẩm",
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.text,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Vui lòng nhập tên sản phẩm';
+                  return "Vui lòng nhập tên sản phẩm";
                 }
                 return null;
               },
@@ -122,14 +122,14 @@ class _PageAddProductState extends State<PageAddProduct> {
             // Trường nhập liệu cho "Giá"
             TextFormField(
               controller: txtGia,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: "Giá",
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.number,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Vui lòng nhập giá sản phẩm';
+                  return "Vui lòng nhập giá sản phẩm";
                 }
                 return null;
               },
@@ -138,7 +138,7 @@ class _PageAddProductState extends State<PageAddProduct> {
             // Trường nhập liệu cho "Đơn vị"
             TextFormField(
               controller: txtUnit,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: "Đơn vị",
                 border: OutlineInputBorder(),
               ),
@@ -150,7 +150,7 @@ class _PageAddProductState extends State<PageAddProduct> {
             // Trường nhập liệu cho "Mô tả"
             TextFormField(
               controller: txtMoTa,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: "Mô tả",
                 border: OutlineInputBorder(),
               ),
@@ -162,14 +162,14 @@ class _PageAddProductState extends State<PageAddProduct> {
             // Trường nhập liệu cho "Phần trăm giảm giá"
             TextFormField(
               controller: txtDiscount,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: "Giảm giá (%)",
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.number,
             ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             isAddingNewCategory
                 ? TextFormField(
               controller: txtNewCategory,
@@ -198,7 +198,7 @@ class _PageAddProductState extends State<PageAddProduct> {
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     value: selectedCategory,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Danh mục',
                       border: OutlineInputBorder(),
                     ),
@@ -207,7 +207,7 @@ class _PageAddProductState extends State<PageAddProduct> {
                         value: category,
                         child: Text(category),
                       )),
-                      const DropdownMenuItem(
+                      DropdownMenuItem(
                         value: '__add_new__',
                         child: Text('+ Thêm danh mục mới'),
                       ),
@@ -235,7 +235,7 @@ class _PageAddProductState extends State<PageAddProduct> {
               ],
             ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // Nút "Thêm"
             Row(

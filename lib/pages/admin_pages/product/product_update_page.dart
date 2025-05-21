@@ -9,9 +9,8 @@ import '../../dialog/dialogs.dart';
 import '../supabase_helper.dart';
 
 class PageUpdateProduct extends StatefulWidget {
-  // const PageUpdateProduct({super.key});
+  PageUpdateProduct({super.key, required this.product});
   final Product product;
-  const PageUpdateProduct({super.key, required this.product});
   @override
   State<PageUpdateProduct> createState() => _PageUpdateProductState();
 }
@@ -43,59 +42,6 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
     isDeleted = widget.product.isDeleted;
     _fetchCategories();
   }
-
-  Future<void> _showAddCategoryDialog() async {
-    String? newCategory;
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Thêm danh mục mới'),
-          content: TextField(
-            decoration: const InputDecoration(
-              labelText: 'Tên danh mục',
-              border: OutlineInputBorder(),
-            ),
-            onChanged: (value) => newCategory = value,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Hủy'),
-            ),
-            TextButton(
-              onPressed: () async {
-                if (newCategory != null && newCategory!.trim().isNotEmpty) {
-                  final categoryName = newCategory!.trim();
-
-                  final response = await Supabase.instance.client
-                      .from('product')
-                      .insert({
-                    'name': 'Temp',
-                    'price': 0,
-                    'unit': 'VND',
-                    'thumbnail_url': '',
-                    'category_name': categoryName,
-                    'discount_percent': 0,
-                    'description': 'Temp for category',
-                    'is_deleted': true,
-                    'store_id': widget.product.storeId,
-                  });
-
-                  Navigator.pop(context);
-                  await _fetchCategories();
-                  setState(() {
-                    selectedCategory = categoryName;
-                  });
-                }
-              },
-              child: const Text('Thêm'),
-            ),
-          ],
-        );
-      },
-    );
-  }
   Future<void> _fetchCategories() async {
     try {
       // Truy vấn danh mục từ bảng product
@@ -123,7 +69,7 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Cập nhật sản phẩm"),
+        title: Text("Cập nhật sản phẩm"),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: SingleChildScrollView(
@@ -143,7 +89,7 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
                   ? Image.file(File(_xFile!.path), fit: BoxFit.cover)
                   : widget.product.thumbnailUrl.isNotEmpty
                   ? Image.network(widget.product.thumbnailUrl, fit: BoxFit.cover)
-                  : const Icon(Icons.image, size: 80, color: Colors.grey),
+                  : Icon(Icons.image, size: 80, color: Colors.grey),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -159,7 +105,7 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
                         });
                     }
                   },
-                  child: const Text("Chọn ảnh"),
+                  child: Text("Chọn ảnh"),
                 ),
               ],
             ),
@@ -167,7 +113,7 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
             // Trường nhập liệu cho "Tên sản phẩm"
             TextFormField(
               controller: txtTen,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: "Tên sản phẩm",
                 border: OutlineInputBorder(),
               ),
@@ -183,7 +129,7 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
             // Trường nhập liệu cho "Giá"
             TextFormField(
               controller: txtGia,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: "Giá",
                 border: OutlineInputBorder(),
               ),
@@ -199,7 +145,7 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
             // Trường nhập liệu cho "Đơn vị"
             TextFormField(
               controller: txtUnit,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: "Đơn vị",
                 border: OutlineInputBorder(),
               ),
@@ -209,7 +155,7 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
             // Trường nhập liệu cho "Mô tả"
             TextFormField(
               controller: txtMoTa,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: "Mô tả",
                 border: OutlineInputBorder(),
               ),
@@ -219,14 +165,14 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
             // Trường nhập liệu cho "Phần trăm giảm giá"
             TextFormField(
               controller: txtDiscount,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: "Giảm giá (%)",
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.number,
             ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             isAddingNewCategory
                 ? TextFormField(
               controller: txtNewCategory,
@@ -255,7 +201,7 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     value: selectedCategory,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Danh mục',
                       border: OutlineInputBorder(),
                     ),
@@ -264,7 +210,7 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
                         value: category,
                         child: Text(category),
                       )),
-                      const DropdownMenuItem(
+                      DropdownMenuItem(
                         value: '__add_new__',
                         child: Text('+ Thêm danh mục mới'),
                       ),
@@ -292,9 +238,9 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
               ],
             ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             SwitchListTile(
-              title: const Text("Ẩn sản phẩm"),
+              title: Text("Ẩn sản phẩm"),
               value: isDeleted,
               onChanged: (value) {
                 setState(() {
@@ -355,7 +301,7 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
                     showSnackBar(context, message: "Đã cập nhật.... ${txtTen.text}", seconds: 2);
                     Navigator.pop(context);
                   },
-                  child: const Text("Cập nhật"),
+                  child: Text("Cập nhật"),
                 ),
               ],
             ),
