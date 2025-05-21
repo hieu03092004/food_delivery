@@ -1,136 +1,195 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:timeline_tile/timeline_tile.dart';
 import 'package:intl/intl.dart';
 
 import '../../../model/shipper_model/Notification_model.dart';
 import '../../../service/shipper_service/Notifications/Notifications_data.dart';
+import '../../authentication/authenticaion_state/authenticationCubit.dart'; // đường dẫn tới file provider của bạn
 
-class NotificationsPage extends StatelessWidget {
+class NotificationsPage extends StatefulWidget {
   const NotificationsPage({Key? key}) : super(key: key);
 
   @override
+  State<NotificationsPage> createState() => _NotificationsPageState();
+}
+
+class _NotificationsPageState extends State<NotificationsPage> {
+  final _filters = ['today', 'yesterday', 'all'];
+
+  @override
+  void initState() {
+    super.initState();
+    // Lần đầu load “Hôm nay”
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final prov = context.read<NotificationProvider>();
+      prov.markReadByFilter('today')
+          .then((_) => prov.fetchByFilter('today'))
+          .then((_) => prov.fetchUnreadCount());
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final dateFormatter = DateFormat('dd-MM-yyyy HH:mm');
-    final now = DateTime.now();
-    final yesterday = now.subtract(const Duration(days: 1));
-
-    // Phân nhóm
-    final todayList = notifications.where((item) {
-      final dt = item.dateTime;
-      return dt.year == now.year && dt.month == now.month && dt.day == now.day;
-    }).toList();
-
-    final yesterdayList = notifications.where((item) {
-      final dt = item.dateTime;
-      return dt.year == yesterday.year && dt.month == yesterday.month && dt.day == yesterday.day;
-    }).toList();
-
-    Widget buildList(List<NotificationItem> items) {
-      if (items.isEmpty) {
-        return const Center(
-          child: Text('Không có thông báo nào'),
-        );
-      }
-      return ListView.separated(
-        itemCount: items.length,
-        separatorBuilder: (context, index) => const Divider(height: 1),
-        itemBuilder: (context, index) {
-          final item = items[index];
-          return ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            leading: item.iconUrl != null
-                ? ClipOval(
-              child: Image.network(
-                item.iconUrl!,
-                width: 40,
-                height: 40,
-                fit: BoxFit.cover,
-              ),
-            )
-                : Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade200,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.local_shipping,
-                color: Colors.grey,
-              ),
-            ),
-            title: Text(
-              item.title,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  RichText(
-                    text: TextSpan(
-                      style: const TextStyle(color: Colors.black),
-                      children: [
-                        if (item.orderCode != null) ...[
-                          const TextSpan(text: 'Đơn hàng '),
-                          TextSpan(
-                            text: item.orderCode!,
-                            style: const TextStyle(color: Colors.blue),
-                          ),
-                          const TextSpan(text: ' '),
-                        ],
-                        TextSpan(text: item.message),
-                      ],
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    dateFormatter.format(item.dateTime),
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-            onTap: () {
-              // TODO: xử lý khi nhấn vào thông báo
-            },
-          );
-        },
-      );
-    }
-
     return DefaultTabController(
-      length: 3,
+      length: _filters.length,
       child: Scaffold(
-        backgroundColor: Colors.white,
         appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 1,
           title: const Text(
             'Thông báo',
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Colors.black, fontWeight: FontWeight.bold),
           ),
-          bottom: const TabBar(
-            labelColor: Colors.blue,
-            unselectedLabelColor: Colors.black,
-            labelStyle: TextStyle(fontWeight: FontWeight.bold),
-            tabs: [
+          bottom: TabBar(
+            indicatorColor: const Color(0xFFEF2B39),
+            labelColor: const Color(0xFFEF2B39),
+            unselectedLabelColor: Colors.black54,
+            onTap: (index) {
+              final f = _filters[index];
+              final prov = context.read<NotificationProvider>();
+              prov.markReadByFilter(f)
+                  .then((_) => prov.fetchByFilter(f))
+                  .then((_) => prov.fetchUnreadCount());
+            },
+            tabs: const [
               Tab(text: 'Hôm nay'),
               Tab(text: 'Hôm qua'),
               Tab(text: 'Tất cả'),
             ],
           ),
         ),
-        body: TabBarView(
-          children: [
-            buildList(todayList),
-            buildList(yesterdayList),
-            buildList(notifications),
-          ],
+        body: Consumer<NotificationProvider>(
+          builder: (context, prov, _) {
+            final list = prov.notifications;
+            if (list.isEmpty) {
+              return const Center(child: Text('Không có thông báo nào'));
+            }
+            return ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: list.length,
+              itemBuilder: (ctx, i) {
+                return _NotificationTile(
+                  item: list[i],
+                  isLast: i == list.length - 1,
+                );
+              },
+            );
+          },
         ),
       ),
+    );
+  }
+}
+
+class _NotificationTile extends StatelessWidget {
+  final NotificationItem item;
+  final bool isLast;
+
+  const _NotificationTile({
+    Key? key,
+    required this.item,
+    this.isLast = false,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    IconData icon;
+    Color bg;
+    switch (item.title) {
+      case 'Đang vận chuyển':
+        icon = Icons.local_shipping_outlined;
+        bg = Colors.yellow.shade50;
+        break;
+      case 'Giao kiện hàng thành công':
+        icon = Icons.check_circle_outline;
+        bg = Colors.green.shade50;
+        break;
+      case 'Hủy đơn hàng':
+      case 'Giao thất bại':
+        icon = Icons.cancel_outlined;
+        bg = Colors.red.shade50;
+        break;
+      case 'Đơn hàng mới':
+        icon = Icons.info_outline;
+        bg = Colors.orange.shade50;
+        break;
+      default:
+        icon = Icons.info_outline;
+        bg = Colors.grey.shade200;
+    }
+
+    return TimelineTile(
+      isFirst: false,
+      isLast: isLast,
+      beforeLineStyle:
+      LineStyle(color: Colors.grey.shade300, thickness: 1),
+      indicatorStyle: IndicatorStyle(
+        width: 24,
+        height: 24,
+        color: bg,
+        iconStyle:
+        IconStyle(iconData: icon, color: bg.darken()),
+      ),
+      endChild: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.shade200,
+                blurRadius: 4,
+                spreadRadius: 1,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.title ?? '',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                item.message,
+                style: const TextStyle(
+                    fontSize: 14, color: Colors.black87),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                DateFormat('dd-MM-yyyy HH:mm')
+                    .format(item.createdAt),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      alignment: TimelineAlign.manual,
+      lineXY: 0.1,
+    );
+  }
+}
+
+extension on Color {
+  Color darken([double amount = .1]) {
+    final f = 1 - amount;
+    return Color.fromARGB(
+      alpha,
+      (red * f).round(),
+      (green * f).round(),
+      (blue * f).round(),
     );
   }
 }

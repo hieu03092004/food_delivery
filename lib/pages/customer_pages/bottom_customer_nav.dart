@@ -19,7 +19,6 @@ class _BottomCustomerNavState extends State<BottomCustomerNav> {
     HomePage=HomePages();
     pages=[HomePage];
     super.initState();
-    Database.init();
   }
   @override
   Widget build(BuildContext context) {

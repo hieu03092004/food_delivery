@@ -1,3 +1,16 @@
+buildscript {
+    repositories {
+        // Cho phép Gradle tìm các plugin của Google
+        google()
+        // Và Maven Central nếu cần
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:7.4.2")
+        classpath("com.google.gms:google-services:4.3.15") // bản mới nhất tại thời điểm này
+    }
+}
+
 allprojects {
     repositories {
         google()

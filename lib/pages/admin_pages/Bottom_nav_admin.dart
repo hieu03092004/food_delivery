@@ -20,7 +20,6 @@ class _BottomNavAdminState extends State<BottomNavAdmin> {
     HomePage=HomePages();
     pages=[HomePage];
     super.initState();
-    Database.init();
   }
   @override
   Widget build(BuildContext context) {

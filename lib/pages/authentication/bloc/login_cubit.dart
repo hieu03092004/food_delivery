@@ -20,7 +20,7 @@ class LoginCubit extends Cubit<LoginState> {
           .loginWithEmailAndPassword(email: email, password: password);
 
       // emit success with role & store
-      emit(LoginSuccess(result.roleId, result.storeId));
+      emit(LoginSuccess(result.roleName, result.storeId,result.uid,result.email));
     } catch (e) {
       emit(LoginFailure(e.toString()));
     }

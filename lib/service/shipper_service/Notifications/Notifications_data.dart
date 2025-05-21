@@ -1,28 +1,60 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../../model/shipper_model/Notification_model.dart';
 
-final List<NotificationItem> notifications = [
-  NotificationItem(
-    id: 'n1',
-    title: 'Đơn hàng đã hoàn tất',
-    orderCode: '2504135FM7X01Y',
-    message: 'đã hoàn thành. Bạn hãy đánh giá sản phẩm trước ngày 19-05-2025 để nhận 300 xu và giúp người dùng khác hiểu hơn về sản phẩm nhé!',
-    dateTime: DateTime(2025, 4, 26, 10, 55),
-    iconUrl: null,
-  ),
-  NotificationItem(
-    id: 'n2',
-    title: 'Đơn hàng đã hoàn tất',
-    orderCode: '2504135ZH7PW5X',
-    message: 'đã hoàn thành. Bạn hãy đánh giá sản phẩm trước ngày 19-05-2025 để nhận 300 xu và giúp người dùng khác hiểu hơn về sản phẩm nhé!',
-    dateTime: DateTime(2025, 4, 26, 10, 55),
-    iconUrl: null,
-  ),
-  NotificationItem(
-    id: 'n3',
-    title: 'Nhắc nhở: Bạn đã nhận được hàng chưa?',
-    orderCode: '2504135E5WHXU',
-    message: 'Nếu bạn chưa nhận được hàng hoặc gặp vấn đề về đơn hàng này, hãy nhấn Trả hàng/Hoàn tiền trước ngày 19-04-2025. Sau thời gian này, Shopee sẽ hoàn thành giao dịch cho Người bán.',
-    dateTime: DateTime(2025, 4, 27, 9, 30),
-    iconUrl: null,
-  ),
-];
+class NotificationService {
+  final _base = 'http://10.0.2.2:3000/notifications';
+  final SupabaseClient _supabase = Supabase.instance.client;
+  Future<List<NotificationItem>> getAllNotifications(int accountId) async {
+    final response = await _supabase
+        .from('notification')
+        .select()
+        .eq('recipient_id', accountId)
+        .order('created_at', ascending: false);
+
+    print(response);
+    final raw = response as List<dynamic>;
+    print('Data":$raw');
+    return raw
+        .map((e) => NotificationItem.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+  Future<List<NotificationItem>> getNotificationsByDateRange(
+      int accountId, DateTime start, DateTime end) async {
+    final response = await _supabase
+        .from('notification')
+        .select()
+        .eq('recipient_id', accountId)
+        .gte('created_at', start.toIso8601String())
+        .lt('created_at', end.toIso8601String())
+        .order('created_at', ascending: false);
+
+    final data = response as List<dynamic>;
+
+    return data
+        .map((e) => NotificationItem.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Lấy thông báo “Hôm nay” theo giờ server
+  Future<List<NotificationItem>> getTodayNotifications(int accountId) {
+    print("Vao today");
+    final now = DateTime.now();
+    final startOfDay =
+    DateTime(now.year, now.month, now.day); // 00:00:00 hôm nay
+    final startOfTomorrow =
+    startOfDay.add(const Duration(days: 1)); // 00:00:00 ngày mai
+    return getNotificationsByDateRange(accountId, startOfDay, startOfTomorrow);
+  }
+
+  /// Lấy thông báo “Hôm qua”
+  Future<List<NotificationItem>> getYesterdayNotifications(int accountId) {
+    print("Vao yesterday");
+    final now = DateTime.now();
+    final startOfToday = DateTime(now.year, now.month, now.day);
+    final startOfYesterday = startOfToday.subtract(const Duration(days: 1));
+    return getNotificationsByDateRange(
+        accountId, startOfYesterday, startOfToday);
+  }
+
+}

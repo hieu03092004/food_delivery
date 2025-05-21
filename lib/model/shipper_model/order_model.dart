@@ -1,62 +1,112 @@
 class Order {
-  final String id;
+  final int id;
+  final int customerId;
+  final String customerName;
   final String storeName;
   final String productName;
   final String description;
   final int quantity;
   final double originalPrice;
-  final double discountPercentage;
-  final double discountedPrice;  // Giá sau khi tính giảm giá
-  final double totalAmount;      // Tổng tiền = discountedPrice * quantity
+  final double discountedPrice;
   final String imageUrl;
-  final String statusText;
-  final String customerName;     // Thêm tên người dùng
+  String status; // Trạng thái tiếng Anh trong DB
+  String statusText; // Trạng thái tiếng Việt hiển thị trên UI
+  final double shippingFee;
+  final DateTime orderDate;
+  double totalAmount; // Tổng tiền = (giá đã giảm * số lượng) + phí giao hàng
 
   Order({
     required this.id,
+    required this.customerId,
+    required this.customerName,
     required this.storeName,
     required this.productName,
-    this.description = '',
+    required this.description,
     required this.quantity,
     required this.originalPrice,
-    required this.discountPercentage,
     required this.discountedPrice,
-    required this.totalAmount,
     required this.imageUrl,
-    required this.statusText,
-    required this.customerName,
+    required this.status,
+    this.statusText = '', // Ban đầu để trống, sẽ được thiết lập sau
+    required this.shippingFee,
+    required this.orderDate,
+    this.totalAmount = 0, // Ban đầu để 0, sẽ được tính toán sau
   });
 
-  // Factory method để tạo Order từ map (JSON) từ Supabase
   factory Order.fromJson(Map<String, dynamic> json) {
-    // Tính toán giá sau khi giảm giá
-    final double originalPrice = json['original_price'] is int
-        ? (json['original_price'] as int).toDouble()
-        : json['original_price'];
-
-    final double discountPercentage = json['discount_percentage'] is int
-        ? (json['discount_percentage'] as int).toDouble()
-        : json['discount_percentage'];
-
-    final double discountedPrice = originalPrice * (1 - discountPercentage / 100);
-
-    // Tính tổng tiền dựa trên giá đã giảm và số lượng
-    final int quantity = json['quantity'] ?? 1;
-    final double totalAmount = discountedPrice * quantity;
-
     return Order(
-      id: json['order_id']?.toString() ?? '',
-      storeName: json['store_name'] ?? '',
-      productName: json['title'] ?? '',
-      description: json['description'] ?? '',
-      quantity: quantity,
-      originalPrice: originalPrice,
-      discountPercentage: discountPercentage,
-      discountedPrice: discountedPrice,
-      totalAmount: totalAmount,
-      imageUrl: json['thumbnail'] ?? '',
-      statusText: json['status'] ?? '',
+      id: json['order_id'] ?? 0,
+      customerId:json['customer_id']     as int,
       customerName: json['customer_name'] ?? '',
+      storeName: json['store_name'] ?? '',
+      productName: json['product_name'] ?? '',
+      description: json['description'] ?? '',
+      quantity: json['quantity'] ?? 0,
+      originalPrice: (json['original_price'] ?? 0).toDouble(),
+      discountedPrice: (json['discounted_price'] ?? 0).toDouble(),
+      imageUrl: json['thumbnail_url'] ?? '',
+      status: json['status'] ?? '',
+      shippingFee: (json['shipping_fee'] ?? 0).toDouble(),
+      orderDate: json['order_date'] != null
+          ? DateTime.parse(json['order_date'])
+          : DateTime.now(),
     );
+  }
+  @override
+  String toString() {
+    return 'Order('
+        'id: $id, '
+        'customer: $customerName, '
+        'store: $storeName, '
+        'product: $productName, '
+        'qty: $quantity, '
+        'status: $status'
+        ')';
+  }
+}
+class OrderWithItems {
+  final int id;
+  final int customerId;
+  final String customerName;
+  final String storeName;
+  String status;
+  String statusText;
+  final double shippingFee;
+  final DateTime orderDate;
+  final List<Order> items;
+
+  OrderWithItems({
+    required this.id,
+    required this.customerId,
+    required this.customerName,
+    required this.storeName,
+    required this.status,
+    required this.statusText,
+    required this.shippingFee,
+    required this.orderDate,
+    required this.items,
+  });
+
+  int get totalProducts =>
+      items.fold(0, (sum, x) => sum + x.quantity);
+
+  double get totalAmount =>
+      items.fold(0.0, (sum, x) => sum + x.discountedPrice * x.quantity)
+          + shippingFee;
+  @override
+  String toString() {
+    return 'OrderWithItems('
+        'id: $id, '
+        'customerId: $customerId, '
+        'customerName: $customerName, '
+        'storeName: $storeName, '
+        'status: $status, '
+        'statusText: $statusText, '
+        'shippingFee: $shippingFee, '
+        'orderDate: $orderDate, '
+        'totalProducts: $totalProducts, '
+        'totalAmount: $totalAmount, '
+        'items: $items'
+        ')';
   }
 }
