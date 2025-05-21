@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:food_delivery/pages/authentication/bloc/login_cubit.dart';
 import 'package:food_delivery/domains/authentication_respository/authentication_respository.dart';
-
-import '../../domains/data_source/firebase_auth_service.dart';
-import 'authenticaion_state/authenticationCubit.dart';
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
@@ -53,27 +50,23 @@ class _LoginViewState extends State<LoginView> {
     return BlocListener<LoginCubit, LoginState>(
       listener: (context, state) {
         if (state is LoginSuccess) {
-          print('Đăng nhập thành công với roleName: ${state.roleName}, storeId: ${state.storeId},userID:${state.userId}');
-          final authResult = AuthResult(
-            uid:     state.userId,        // từ state.userId (kiểu int) hoặc String tuỳ bạn
-            email:   state.email,
-            roleName:  state.roleName,
-            storeId: state.storeId,
-          );
-
-          // 2) Đẩy lên AuthenticationCubit để lưu toàn cục
-          context.read<AuthenticationCubit>().loggedIn(authResult);
+          print('Đăng nhập thành công với roleName: ${state.roleName}, storeId: ${state.storeId}');
           switch (state.roleName) {
             case 'admin':
-              Navigator.pushReplacementNamed(context, '/adminHome');
+              Navigator.pushReplacementNamed(
+                context,
+                '/adminHome',
+                arguments: state.storeId,
+              );
               break;
             case 'shipper':
               Navigator.pushReplacementNamed(
                 context,
                 '/shipperHome',
+                arguments: state.storeId,
               );
               break;
-            case 'customer' :
+            case 'customer':
             default:
               Navigator.pushReplacementNamed(context, '/customerHome');
           }

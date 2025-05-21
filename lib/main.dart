@@ -103,7 +103,10 @@ class _MyAppState extends State<MyApp> {
       initialRoute: '/',
       routes: {
         '/': (ctx) => const LoginPage(),
-        '/adminHome': (ctx) => const BottomNavAdmin(),
+        '/adminHome': (context) {
+          final storeId = ModalRoute.of(context)!.settings.arguments as int;
+          return BottomNavAdmin(storeId: storeId);
+        },
         '/shipperHome': (ctx) => const BottomNavShipper(),
         '/customerHome': (ctx) => const BottomCustomerNav(),
         '/notifications': (ctx) => const NotificationsPage(),

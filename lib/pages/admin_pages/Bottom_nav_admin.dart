@@ -1,42 +1,50 @@
 import 'package:flutter/material.dart';
-import 'package:food_delivery/pages/admin_pages/home.dart';
+import 'package:food_delivery/pages/admin_pages/menu_page.dart';
+import 'package:food_delivery/pages/admin_pages/notification_page.dart';
+import 'package:food_delivery/pages/admin_pages/order/order_page.dart';
+import 'package:food_delivery/pages/admin_pages/product/product_page.dart';
 
-import '../../config/database.dart';
 
 class BottomNavAdmin extends StatefulWidget {
-  const BottomNavAdmin({super.key});
+  final int storeId;
+
+  const BottomNavAdmin({super.key, required this.storeId});
 
   @override
   State<BottomNavAdmin> createState() => _BottomNavAdminState();
 }
 
 class _BottomNavAdminState extends State<BottomNavAdmin> {
-  late List<Widget>pages;
-  late HomePages HomePage;
-  int currentTabIndex=0;
+  late List<Widget> pages;
+  int currentTabIndex = 0;
+
   @override
-  void initState(){
-    // TODO: implement initState
-    HomePage=HomePages();
-    pages=[HomePage];
+  void initState() {
     super.initState();
+
+    pages = [
+      // ProductPage(storeId: widget.storeId),
+      ProductPage(storeId: widget.storeId),
+      OrdersPage(storeId: widget.storeId),
+      NotificationsPage(),
+      MenuPage(storeId: widget.storeId),
+    ];
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: pages[currentTabIndex],
-      // Bật nếu bạn có danh sách pages
+      body: pages[currentTabIndex], // Hiển thị trang theo index đã chọn
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: currentTabIndex,
         selectedItemColor: Color(0xffef2b39),
         unselectedItemColor: Colors.grey,
-
         backgroundColor: Colors.white,
-        items: [
+        items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home,),
-            label: 'Trang chủ',
+            icon: Icon(Icons.fastfood),
+            label: 'Món ăn',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_bag),
@@ -53,7 +61,7 @@ class _BottomNavAdminState extends State<BottomNavAdmin> {
         ],
         onTap: (value) {
           setState(() {
-            currentTabIndex = value;
+            currentTabIndex = value; // Thay đổi index khi người dùng chọn tab
           });
         },
       ),
