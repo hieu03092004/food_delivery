@@ -63,10 +63,10 @@ class OrderDetailPage extends StatelessWidget {
             width: double.infinity,
             color: Colors.grey[200],
             padding: const EdgeInsets.all(12),
-            child: Text(
-              'Ngày đặt: ${order.orderDate.toLocal().toString().split(' ')[0]}',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
+            // child: Text(
+            //   'Ngày đặt: ${order.orderDate.toLocal().toString().split(' ')[0]}',
+            //   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            // ),
           ),
           Expanded(
             child: ListView.separated(

@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../model/shipper_model/IncomeEntry.dart';
-import '../../../../service/shipper_service/Profile/chart.dart';
+import '../../../../service/shipper_service/Profile/revenue_service.dart';
 import '../../../authentication/authenticaion_state/authenticationCubit.dart';
 import 'package:timeline_tile/timeline_tile.dart';
 class IncomePage extends StatefulWidget {

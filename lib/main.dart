@@ -40,6 +40,7 @@ Future<void> main() async {
           BlocProvider<LoginCubit>(
             create: (ctx) => LoginCubit(
               authenticationRepository: ctx.read<AuthenticationRepository>(),
+              authenticationCubit: ctx.read<AuthenticationCubit>(),
             ),
           ),
           // 4) AuthenticationCubit giữ thông tin user toàn app

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:food_delivery/pages/authentication/bloc/login_cubit.dart';
 import 'package:food_delivery/domains/authentication_respository/authentication_respository.dart';
+
+import 'authenticaion_state/authenticationCubit.dart';
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
@@ -26,8 +28,13 @@ class LoginPage extends StatelessWidget {
         create: (context) {
           // 1. Lấy đúng repository từ context
           final authRepo = context.read<AuthenticationRepository>();
-          // 2. Trả về một instance LoginCubit với repository
-          return LoginCubit(authenticationRepository: authRepo);
+          // 2. Lấy AuthenticationCubit từ context
+          final authCubit = context.read<AuthenticationCubit>();
+          // 3. Khởi tạo LoginCubit với cả hai tham số cần thiết
+          return LoginCubit(
+            authenticationRepository: authRepo,
+            authenticationCubit: authCubit,
+          );
         },
         child: const LoginView(),
       )
