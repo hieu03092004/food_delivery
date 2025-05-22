@@ -4,10 +4,26 @@ import 'package:food_delivery/pages/shipper_pages/accounts/profile/profile_infor
 import '../../../model/shipper_model/account_model.dart';
 import '../../authentication/authenticaion_state/authenticationCubit.dart';
 import 'income/inComePage.dart';
-class AccountsPage extends StatelessWidget {
+class AccountsPage extends StatefulWidget {
   const AccountsPage({Key? key}) : super(key: key);
 
-  void _navigate(BuildContext context, String screenName) {
+  static const _primaryColor = Color(0xFFEF2B39);
+  static const _textColor = Colors.black87;
+
+  @override
+  State<AccountsPage> createState() => _AccountsPageState();
+}
+
+class _AccountsPageState extends State<AccountsPage> {
+  late Future<Account?> _accountFuture;
+  int? _currentUid;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAccountData();
+  }
+  Future<void> _navigate(BuildContext context, String screenName) async {
     Widget page;
     switch (screenName) {
       case 'Thu nhập':
@@ -22,18 +38,44 @@ class AccountsPage extends StatelessWidget {
           body: Center(child: Text('Trang $screenName đang được xây dựng')),
         );
     }
-    Navigator.push(
+
+    // 🔥 SỬA LỖI: Chờ kết quả từ navigation
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => page),
     );
+
+    print('screenName: $screenName');
+    print('result from navigation: $result');
+
+    // Nếu trả về từ Profile page và có thay đổi, refresh data
+    if (screenName == 'Hồ sơ cá nhân' && result == true) {
+      print('🔄 Refreshing account data...');
+      _refreshAccountData();
+    }
   }
 
-  static const _primaryColor = Color(0xFFEF2B39);
-  static const _textColor = Colors.black87;
-  static const _sectionLabelColor = Colors.grey;
+  void _loadAccountData() {
+    final authState = context.read<AuthenticationCubit>().state;
+    final int? uid = authState.user?.uid;
+    if (uid != null) {
+      _currentUid = uid;
+      _accountFuture = AccountRepository().fetchAccount(uid);
+    }
+  }
+  // Phương thức này sẽ được gọi khi quay về từ Profile page
+  void _refreshAccountData() {
+    if (_currentUid != null) {
+      setState(() {
+        _accountFuture = AccountRepository().fetchAccount(_currentUid!);
+      });
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
+
     // Lấy uid từ state hoặc context của bạn
     final authState = context.watch<AuthenticationCubit>().state;
     final int? uid = authState.user?.uid;
@@ -43,7 +85,7 @@ class AccountsPage extends StatelessWidget {
     }
 
     return FutureBuilder<Account?>(
-      future: AccountRepository().fetchAccount(uid),
+      future: _accountFuture,
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Scaffold(
@@ -65,7 +107,7 @@ class AccountsPage extends StatelessWidget {
             title: const Text(
               'Tài khoản',
               style: TextStyle(
-                color: _textColor,
+                color: AccountsPage._textColor,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -82,7 +124,7 @@ class AccountsPage extends StatelessWidget {
                       radius: 24,
                       backgroundImage: account.avatarUrl != null && account.avatarUrl!.isNotEmpty
                           ? NetworkImage(account.avatarUrl!)
-                          : const AssetImage('assets/avatar.jpg') as ImageProvider,
+                          : const AssetImage('images/avatar.jpg') as ImageProvider,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -92,7 +134,7 @@ class AccountsPage extends StatelessWidget {
                           Text(
                             account.fullName,
                             style: const TextStyle(
-                              color: _textColor,
+                              color: AccountsPage._textColor,
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
@@ -104,7 +146,7 @@ class AccountsPage extends StatelessWidget {
                               'Chỉnh sửa hồ sơ',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: _primaryColor,
+                                color: AccountsPage._primaryColor,
                               ),
                             ),
                           ),
@@ -150,10 +192,10 @@ class AccountsPage extends StatelessWidget {
     Widget? trailing,
   }) {
     return ListTile(
-      leading: Icon(icon, color: _primaryColor, size: 24),
+      leading: Icon(icon, color: AccountsPage._primaryColor, size: 24),
       title: Text(
         label,
-        style: const TextStyle(color: _textColor, fontSize: 15),
+        style: const TextStyle(color: AccountsPage._textColor, fontSize: 15),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
       horizontalTitleGap: 20,

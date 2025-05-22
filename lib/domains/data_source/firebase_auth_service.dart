@@ -3,7 +3,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../config/database.dart';
-// lib/domains/authentication_respository/auth_result.dart
 
 class AuthResult {
   final int uid;

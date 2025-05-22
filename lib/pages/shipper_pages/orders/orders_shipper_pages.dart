@@ -8,7 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 
 import '../../../model/shipper_model/order_model.dart';
-import '../../../service/shipper_service/Order/Order_data.dart';
+import '../../../service/shipper_service/Order/Order_service.dart';
 import '../../authentication/authenticaion_state/authenticationCubit.dart';
 
 
@@ -22,17 +22,6 @@ class OrdersShipperPages extends StatefulWidget {
 
 class _OrdersShipperPagesState extends State<OrdersShipperPages> {
   final OrderService _orderService = OrderService();
-  final Map<String, String> _nextStatusMap = {
-    'order_received': 'in_transit',
-    'in_transit': 'delivered',
-  };
-  final Map<String, String> _dbToUiStatusMap = {
-    'order_received': 'Đã nhận đơn',
-    'in_transit': 'Đang vận chuyển',
-    'delivered': 'Đã giao',
-    'delivered_failed': 'Giao thất bại',
-    'canceled': 'Đã huỷ',
-  };
   final List<String> tabs = [
     'Đã nhận đơn',
     'Đang vận chuyển',
@@ -72,177 +61,42 @@ class _OrdersShipperPagesState extends State<OrdersShipperPages> {
   }
 
   // Thay đổi signature để nhận OrderWithItems
+  // Xử lý cập nhật trạng thái tiếp theo
   Future<void> _onStatusTap(OrderWithItems order) async {
-    print('Order:$order');
-    final currentDb = order.status;
-    final nextDb = _nextStatusMap[currentDb];
-    if (nextDb == null) return;
+    print('Order: $order');
 
-    final oldUi = _dbToUiStatusMap[currentDb]!;
-    final newUi = _dbToUiStatusMap[nextDb]!;
+    final result = await _orderService.processOrderStatusUpdate(order);
 
-    try {
-      await Supabase.instance.client
-          .from('orders')
-          .update({'status': nextDb})
-          .eq('order_id', order.id);
-      // ... (notification, FCM như cũ) ...
-      String content = '';
-      String titleNotifications='';
-      print(newUi);
-      if(newUi=='Đã giao'){
-        content='Đơn hàng ${order.id} của bạn đã được giao thành công';
-        titleNotifications='Giao kiện hàng thành công';
-      }
-      else{
-        content='Đơn hàng ${order.id} của bạn đang trong quá trình vận chuyển';
-        titleNotifications='Đang vận chuyển';
-      }
-      final tokenRes = await Supabase.instance.client
-          .from('account')
-          .select('tokendevice')
-          .eq('account_id', order.customerId)
-          .single();
-      final String? deviceToken = tokenRes['tokendevice'] as String?;
-      if (deviceToken == null) {
-        print('⚠️ User ${order.customerId} chưa có deviceToken');
-      } else {
-        print('👉 Device token: $deviceToken');
-      }
-
-      await Supabase.instance.client
-          .from('notification')
-          .insert({
-        'recipient_id': order.customerId,
-        'order_id'    : order.id,
-        'message'     : content,
-        'title'       : titleNotifications
-      });
-      try {
-        print(content);
-        final response = await http.post(
-          Uri.parse('https://flutter-notifications.vercel.app/send'),  // Thêm cổng 3000
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'deviceToken':deviceToken ,
-            'title': 'Cập nhật đơn hàng',
-            'body': content,
-          }),
-        );
-        print(response);
-        // Kiểm tra trạng thái HTTP response
-        if (response.statusCode >= 200 && response.statusCode < 300) {
-          // Thành công - mã trạng thái 2xx
-          print('📦 Gửi FCM thành công: ${response.body}');
-
-          // Nếu cần phân tích thêm nội dung phản hồi JSON
-          try {
-            final responseData = jsonDecode(response.body);
-            // Xử lý dữ liệu phản hồi nếu cần
-            print('📦 Chi tiết phản hồi: $responseData');
-          } catch (jsonError) {
-            print('⚠️ Lỗi phân tích JSON phản hồi: $jsonError');
-          }
-        } else {
-          // Thất bại - mã trạng thái không phải 2xx
-          print('⚠️ Gửi FCM thất bại: ${response.statusCode} - ${response.body}');
-        }
-      } catch (httpError) {
-        // Bắt lỗi khi gửi request HTTP (lỗi kết nối, timeout, v.v.)
-        print('❌ Lỗi kết nối khi gửi FCM: $httpError');
-      }
+    if (result.success) {
       setState(() {
-        order.status = nextDb;
-        order.statusText = newUi;
-        _ordersByStatus[oldUi]?.remove(order);
-        _ordersByStatus.putIfAbsent(newUi, () => []);
-        _ordersByStatus[newUi]!.insert(0, order);
+        order.status = result.newDbStatus!;
+        order.statusText = result.newStatus!;
+        _ordersByStatus[result.oldStatus!]?.remove(order);
+        _ordersByStatus.putIfAbsent(result.newStatus!, () => []);
+        _ordersByStatus[result.newStatus!]!.insert(0, order);
       });
-    } catch (e) {
-      print('❌ Lỗi khi đổi trạng thái: $e');
+    } else {
+      // Hiển thị thông báo lỗi nếu cần
+      print('❌ ${result.message}');
+      // Có thể show SnackBar hoặc Dialog để thông báo lỗi cho user
     }
   }
+  // Xử lý cập nhật trạng thái thành "Giao thất bại"
   Future<void> _onDeliveredFailedTap(OrderWithItems order) async {
-    // Cố định hai giá trị
-    const String nextDb = 'delivered_failed';
-    const String newUi = 'Giao thất bại';
+    final result = await _orderService.processOrderDeliveredFailed(order);
 
-    final String oldDb = order.status;
-    final String oldUi = _dbToUiStatusMap[oldDb]!;
-
-    try {
-      // 1. Cập nhật trên Supabase
-      await Supabase.instance.client
-          .from('orders')
-          .update({'status': nextDb})
-          .eq('order_id', order.id);
-
-      // 2. Tạo nội dung thông báo
-      final String content = 'Đơn hàng ${order.id} của bạn đã giao thất bại';
-      final String notificationTitle='Giao thất bại';
-
-      // 3. Lấy deviceToken của khách
-      final tokenRes = await Supabase.instance.client
-          .from('account')
-          .select('tokendevice')
-          .eq('account_id', order.customerId)
-          .single();
-      final String? deviceToken = tokenRes['tokendevice'] as String?;
-      if (deviceToken == null) {
-        print('⚠️ User ${order.customerId} chưa có deviceToken');
-      } else {
-        print('👉 Device token: $deviceToken');
-      }
-
-      // 4. Ghi log notification vào Supabase
-      await Supabase.instance.client.from('notification').insert({
-        'recipient_id': order.customerId,
-        'order_id': order.id,
-        'message': content,
-        'title':notificationTitle
-      });
-
-      // 5. Gửi FCM qua HTTP
-      try {
-        final response = await http.post(
-          Uri.parse('https://flutter-notifications.vercel.app/send'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'deviceToken': deviceToken,
-            'title': 'Cập nhật đơn hàng',
-            'body': content,
-          }),
-        );
-
-        if (response.statusCode >= 200 && response.statusCode < 300) {
-          print('📦 Gửi FCM thành công: ${response.body}');
-          try {
-            final responseData = jsonDecode(response.body);
-            print('📦 Chi tiết phản hồi: $responseData');
-          } catch (jsonError) {
-            print('⚠️ Lỗi phân tích JSON: $jsonError');
-          }
-        } else {
-          print('⚠️ Gửi FCM thất bại: ${response.statusCode} - ${response.body}');
-        }
-      } catch (httpError) {
-        print('❌ Lỗi khi gửi FCM: $httpError');
-      }
-
-      // 6. Cập nhật UI local và danh sách _ordersByStatus
+    if (result.success) {
       setState(() {
-        order.status = nextDb;
-        order.statusText = newUi;
-
-        // Bỏ khỏi danh sách cũ
-        _ordersByStatus[oldUi]?.remove(order);
-
-        // Thêm vào danh sách mới
-        _ordersByStatus.putIfAbsent(newUi, () => []);
-        _ordersByStatus[newUi]!.insert(0, order);
+        order.status = result.newDbStatus!;
+        order.statusText = result.newStatus!;
+        _ordersByStatus[result.oldStatus!]?.remove(order);
+        _ordersByStatus.putIfAbsent(result.newStatus!, () => []);
+        _ordersByStatus[result.newStatus!]!.insert(0, order);
       });
-    } catch (e) {
-      print('❌ Lỗi khi đổi trạng thái sang Giao thất bại: $e');
+    } else {
+      // Hiển thị thông báo lỗi nếu cần
+      print('❌ ${result.message}');
+      // Có thể show SnackBar hoặc Dialog để thông báo lỗi cho user
     }
   }
 

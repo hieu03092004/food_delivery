@@ -6,10 +6,9 @@ import 'package:food_delivery/pages/shipper_pages/accounts/profile/profile_infor
 import 'package:food_delivery/pages/shipper_pages/accounts/profile/profile_information/editGender.dart';
 import 'package:food_delivery/pages/shipper_pages/accounts/profile/profile_information/editPhoneNumber.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../../model/shipper_model/profile_model.dart';
-import '../../../../../service/shipper_service/Profile/profile_data.dart';
+import '../../../../../service/shipper_service/Profile/profile_service.dart';
 import '../../../../authentication/authenticaion_state/authenticationCubit.dart';
 import 'editEmail.dart';
 import 'editName.dart';
@@ -28,7 +27,8 @@ class _ProfileState extends State<Profile> {
 
   XFile? _pickedFile;
   String? _uploadedImageUrl;
-  bool _uploading = false;
+  bool _uploading=false;
+  bool _hasDataChanged = false; // Thêm flag để track thay đổi
 
   @override
   void initState() {
@@ -57,6 +57,7 @@ class _ProfileState extends State<Profile> {
           value: newName,
         );
         if (ok) {
+          _hasDataChanged = true;
           setState(() {
             // Ép FutureBuilder chạy lại
             _profileFuture = _service.getProfile(userId);
@@ -78,6 +79,7 @@ class _ProfileState extends State<Profile> {
           value: newEmail,
         );
         if (ok) {
+          _hasDataChanged = true;
           setState(() {
             _profileFuture = _service.getProfile(userId);
           });
@@ -97,6 +99,7 @@ class _ProfileState extends State<Profile> {
           value: newPhone,
         );
         if (ok) {
+          _hasDataChanged = true;
           setState(() {
             _profileFuture = _service.getProfile(userId);
           });
@@ -116,6 +119,7 @@ class _ProfileState extends State<Profile> {
           value: newGender,
         );
         if (ok) {
+          _hasDataChanged = true;
           setState(() {
             _profileFuture = _service.getProfile(userId);
           });
@@ -136,6 +140,7 @@ class _ProfileState extends State<Profile> {
           value: newDob.toIso8601String(),
         );
         if (ok) {
+          _hasDataChanged = true;
           setState(() {
             _profileFuture = _service.getProfile(userId);
           });
@@ -151,10 +156,6 @@ class _ProfileState extends State<Profile> {
       )),
     );
   }
-
-    // các label khác nếu cần...
-
-    // Mặc định: push page trống
 
 
   Future<void> _pickAndUploadImage() async {
@@ -178,7 +179,7 @@ class _ProfileState extends State<Profile> {
     final authState = context.read<AuthenticationCubit>().state;
     final int? userId = authState.user?.uid;
     if (userId == null) {
-      print('❌ Không tìm thấy userId, abort.');
+      print(' Không tìm thấy userId, abort.');
       setState(() => _uploading = false);
       return;
     }
@@ -186,29 +187,14 @@ class _ProfileState extends State<Profile> {
     try {
       // Tạo tên file duy nhất
       final String path = "users/user_${userId}.jpg";
-
-      // Gọi thẳng hàm updateImage đã có, upsert = true để ghi đè
-      final String publicUrl = await _service.updateImage(
+      final url = await _service.uploadAvatar(
+        userId: userId,
         image: File(picked.path),
-        bucket: 'images',
-        path: path,
-        upsert: true,
       );
-
-      print('🌐 Public URL: $publicUrl');
-
-      // Update vào bảng account
-      final response = await Supabase.instance.client
-          .from('account')
-          .update({'avatar_url': publicUrl})
-          .eq('account_id', userId)
-          .select()
-          .single();
-
-      if (response != null) {
-        print('✅ Cập nhật avatar_url thành công');
+      if (url != null) {
+        _hasDataChanged = true;
         setState(() {
-          _uploadedImageUrl = publicUrl;
+          _uploadedImageUrl = url;
         });
       }
     } catch (e) {
@@ -217,7 +203,18 @@ class _ProfileState extends State<Profile> {
       setState(() => _uploading = false);
     }
   }
-
+  ImageProvider _getAvatarProvider(ProfileModel profile) {
+    // Ưu tiên: ảnh vừa upload > ảnh vừa chọn > ảnh từ server > ảnh mặc định
+    if (_uploadedImageUrl != null) {
+      return NetworkImage(_uploadedImageUrl!);
+    } else if (_pickedFile != null) {
+      return FileImage(File(_pickedFile!.path));
+    } else if (profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty) {
+      return NetworkImage(profile.avatarUrl!);
+    } else {
+      return const AssetImage('images/avatar.jpg'); // Đảm bảo file này tồn tại
+    }
+  }
   Widget buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -248,12 +245,6 @@ class _ProfileState extends State<Profile> {
 
   @override
   Widget build(BuildContext context) {
-    ImageProvider avatarProvider;
-    if (_pickedFile != null) {
-      avatarProvider = FileImage(File(_pickedFile!.path));
-    } else {
-      avatarProvider = const AssetImage('assets/avatar.png');
-    }
     return  Scaffold(
       appBar: AppBar(
         title: Text('Chỉnh sửa trang cá nhân'),
@@ -261,7 +252,7 @@ class _ProfileState extends State<Profile> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pop(context); // Quay về màn hình trước
+            Navigator.pop(context,_hasDataChanged); // Quay về màn hình trước
           },
         ),
       ),
@@ -276,13 +267,7 @@ class _ProfileState extends State<Profile> {
           }
           final p = snap.data!;
           // avatar
-          final ImageProvider avatarProvider =
-          _uploadedImageUrl != null
-              ? NetworkImage(_uploadedImageUrl!)
-              : (p.avatarUrl != null
-              ? NetworkImage(p.avatarUrl!)
-              : const AssetImage('assets/avatar.png'))
-          as ImageProvider;
+          
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: ListView(
@@ -291,7 +276,7 @@ class _ProfileState extends State<Profile> {
                 Center(
                   child: CircleAvatar(
                     radius: 50,
-                    backgroundImage: avatarProvider,
+                    backgroundImage: _getAvatarProvider(p),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -316,7 +301,7 @@ class _ProfileState extends State<Profile> {
                 Center(
                   child: TextButton(
                       onPressed: () {
-                        Navigator.pop(context);
+                        Navigator.pop(context,_hasDataChanged);
                       },
                       child: const Text('Đóng',style: TextStyle(color: Color(0xffef2b39)),)),
                 )

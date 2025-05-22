@@ -4,7 +4,6 @@ import 'package:timeline_tile/timeline_tile.dart';
 import 'package:intl/intl.dart';
 
 import '../../../model/shipper_model/Notification_model.dart';
-import '../../../service/shipper_service/Notifications/Notifications_data.dart';
 import '../../authentication/authenticaion_state/authenticationCubit.dart'; // đường dẫn tới file provider của bạn
 
 class NotificationsPage extends StatefulWidget {

@@ -110,3 +110,18 @@ class OrderWithItems {
         ')';
   }
 }
+class UpdateOrderResult {
+  final bool success;
+  final String message;
+  final String? oldStatus;
+  final String? newStatus;
+  final String? newDbStatus;
+
+  UpdateOrderResult({
+    required this.success,
+    required this.message,
+    this.oldStatus,
+    this.newStatus,
+    this.newDbStatus,
+  });
+}
