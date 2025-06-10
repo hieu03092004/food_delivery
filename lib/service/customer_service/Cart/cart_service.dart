@@ -11,6 +11,7 @@ import 'package:supabase_auth_ui/supabase_auth_ui.dart';
 /// Service to manage cart for both guest and authenticated users
 class CartService extends GetxController {
   final supabase = Supabase.instance.client;
+  final accountID =Get.find<AuthService>().accountId.value;
 
   Future<List<CartItem>> fetchCartItems(int accountId) async {
     try {
@@ -80,7 +81,7 @@ class CartService extends GetxController {
     final rawList = await supabase
         .from('cart_detail')
         .select('product_id')
-        .eq('account_id', Get.find<AuthService>().accountId.value);
+        .eq('account_id', accountID);
     final ids = rawList.map((e) => (e as Map<String, dynamic>)['product_id'] as int).toSet();
     distinctCount.value = ids.length;
   }
@@ -91,7 +92,7 @@ class CartService extends GetxController {
 
   /// 2. Logic thêm sản phẩm vào giỏ (add 1 vào quantity nếu đã có)
   ///
-  Future<void> addProductToCart(int accountId, int productId) async {
+  Future<void> addProductToCart(int accountId, int productId, int quantity) async {
     // 2.1. Kiểm tra record hiện tại (accountId, productId)
     final List<dynamic> existing = await supabase
         .from('cart_detail')
@@ -105,7 +106,7 @@ class CartService extends GetxController {
       final int currentQty = (existing.first['quantity'] as num).toInt();
       final res = await supabase
           .from('cart_detail')
-          .update({'quantity': currentQty + 1})
+          .update({'quantity': currentQty + quantity})
           .match({
         'account_id': accountId,
         'product_id': productId,
@@ -121,7 +122,7 @@ class CartService extends GetxController {
           .insert({
         'account_id': accountId,
         'product_id': productId,
-        'quantity': 1,
+        'quantity': quantity,
       });
       reload();
       print("Đã cập nhật");

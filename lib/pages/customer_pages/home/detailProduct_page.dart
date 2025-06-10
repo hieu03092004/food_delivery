@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:food_delivery/service/auth_servicae/AuthService.dart';
 import 'package:food_delivery/service/customer_service/Cart/cart_service.dart';
 import 'package:intl/intl.dart';
+import 'package:get/get.dart';
 
 class DetailProductPage extends StatefulWidget {
   final Product product;
@@ -22,6 +23,9 @@ class DetailProductPage extends StatefulWidget {
 class _DetailProductPageState extends State<DetailProductPage> {
   Color themeOrange = Color(0xFFEE4D2D);
   int quantity = 1;
+  final cartService = Get.find<CartService>();
+  final auth = Get.find<AuthService>();
+
 
   @override
   Widget build(BuildContext context) {
@@ -267,7 +271,8 @@ class _DetailProductPageState extends State<DetailProductPage> {
                     ),
                     onPressed: () async{
                       print('Đã nhấn Thêm vào giỏ hàng');
-                      // await CartService().addItem(accountId, context, widget.product.id, quantity);
+                      await cartService.addProductToCart(auth.accountId.value, widget.product.id, quantity);
+
                     },
                     child: const Text(
                       'Thêm vào giỏ hàng',

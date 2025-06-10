@@ -14,6 +14,7 @@ class AuthService extends GetxController {
   /// accountId = 0 nghĩa là chưa login
   final RxInt accountId = 0.obs;
   final RxString roleName = ''.obs;
+  final RxInt storeId = 0.obs;
 
   @override
   void onInit() {
@@ -35,7 +36,7 @@ class AuthService extends GetxController {
     print(userUUID);
     final resp = await _supabase
         .from('account')
-        .select('account_id, role_name')
+        .select('account_id, role_name, store_id' )
         .eq('user_id', userUUID)
         .single();
 
@@ -44,15 +45,14 @@ class AuthService extends GetxController {
 
     accountId.value = (record['account_id'] as num).toInt();
     roleName.value  = record['role_name']   as String;
+    // storeId.value = (record['store_id'] as num).toInt();
+
     print("đã đăng nhập");
     print(roleName.value);
     print(accountId.value);
     final cartService = Get.find<CartService>();
     await cartService.reload();
 
-    update();
-
-    update();
     // Điều hướng theo role, thay thế toàn bộ stack
     switch (roleName.value) {
       case 'admin':

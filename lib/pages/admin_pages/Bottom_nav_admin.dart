@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../config/database.dart';
 
 class BottomNavAdmin extends StatefulWidget {
+
   const BottomNavAdmin({super.key});
 
   @override

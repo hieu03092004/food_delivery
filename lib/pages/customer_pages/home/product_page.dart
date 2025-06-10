@@ -175,7 +175,7 @@ class _ProductPageState extends State<ProductPage> {
                                   final id = auth.accountId.value;
                                   if(loggedIn){
                                     print("Đã đăng nhập");
-                                    await cartService.addProductToCart(id, product.id);
+                                    await cartService.addProductToCart(id, product.id, 1);
 
                                   }
                                   else{

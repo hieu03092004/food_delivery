@@ -53,17 +53,11 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
                 padding: const EdgeInsets.only(right: 16.0, top: 4.0),
                 icon: const Icon(Icons.shopping_cart, color: Colors.white),
                 onPressed: () async {
-                  if (loggedIn) {
                     // Chuyển tới CartPage nếu đã đăng nhập
-                    await Get.to(() => CartPage(accountId: id));
+                    await Get.toNamed('/cart');
                     cartService.reload();
                     // Khi quay về, reload lại badge count
 
-                  } else {
-                    // Chưa login, chuyển đến trang auth
-                    await Get.to(() => PageAuthUser());
-                    cartService.reload();
-                  }
                 },
               );
             })
