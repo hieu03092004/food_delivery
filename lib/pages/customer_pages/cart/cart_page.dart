@@ -19,6 +19,7 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
+  final cartService = Get.find<CartService>();
   late Future<List<CartItem>> _futureItems;
   // trạng thái chọn toàn cục
   bool _allSelected = false;
@@ -32,7 +33,7 @@ class _CartPageState extends State<CartPage> {
   @override
   void initState() {
     super.initState();
-    _futureItems = CartService().fetchCartItems(widget.accountId);
+    _futureItems = cartService.fetchCartItems(widget.accountId);
   }
 
   // Tạo khóa duy nhất cho mỗi item dựa trên storeId và productId
@@ -58,7 +59,7 @@ class _CartPageState extends State<CartPage> {
           final items = snap.data!;
           if (items.isEmpty) return const Center(child: Text('Giỏ hàng trống'));
 
-          // 1) Tạo Map để gom các sản phẩm theo storeId
+          // Tạo Map để gom các sản phẩm theo storeId
           final Map<int, Store> storeMap = {};
           final Map<int, List<CartItem>> itemsByStore = {};
 

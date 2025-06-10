@@ -11,6 +11,7 @@ import 'package:supabase_auth_ui/supabase_auth_ui.dart';
 /// Service to manage cart for both guest and authenticated users
 class CartService extends GetxController {
   final supabase = Supabase.instance.client;
+  final accountID =Get.find<AuthService>().accountId.value;
 
   Future<List<CartItem>> fetchCartItems(int accountId) async {
     try {
@@ -66,7 +67,6 @@ class CartService extends GetxController {
   }
 
 
-  /// Xoá toàn bộ giỏ hàng của user khi logout
   /// số sản phẩm khác nhau trong giỏ (distinct)
   final RxInt distinctCount = 0.obs;
 
@@ -79,8 +79,7 @@ class CartService extends GetxController {
   Future<void> _loadCount() async {
     final rawList = await supabase
         .from('cart_detail')
-        .select('product_id')
-        .eq('account_id', Get.find<AuthService>().accountId.value);
+        .select('product_id');
     final ids = rawList.map((e) => (e as Map<String, dynamic>)['product_id'] as int).toSet();
     distinctCount.value = ids.length;
   }

@@ -177,112 +177,112 @@ class _DetailProductPageState extends State<DetailProductPage> {
       isScrollControlled: true,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) =>
-            Container(
-              decoration: BoxDecoration(
+          Container(
+            decoration: BoxDecoration(
 
-              ),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Image.network(
-                        widget.product.thumbnailURL,
-                        width: 80,
-                        height: 80,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: 80,
-                            height: 80,
-                            color: Colors.grey[200],
-                            child: const Icon(Icons.image_not_supported),
-                          );
-                        },
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${widget.product.name}',
-                              style: const TextStyle(
-                                color: Colors.deepOrangeAccent ,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-
-
-                  Row(
-
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      const Text(
-                        'Số lượng',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          if (quantity > 1) {
-                            setModalState(() {
-                              quantity--;
-                            });
-                            setState(() {});
-                          }
-                        },
-                        icon: const Icon(Icons.remove_circle_outline),
-                      ),
-                      Text(
-                        '$quantity',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          setModalState(() {
-                            quantity++;
-                          });
-                          setState(() {});
-                        },
-                        icon: const Icon(Icons.add_circle_outline),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: themeOrange,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      onPressed: () async{
-                        print('Đã nhấn Thêm vào giỏ hàng');
-                        await cartService.addProductToCart(auth.accountId.value, widget.product.id, quantity);
-
+            ),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Image.network(
+                      widget.product.thumbnailURL,
+                      width: 80,
+                      height: 80,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 80,
+                          height: 80,
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.image_not_supported),
+                        );
                       },
-                      child: const Text(
-                        'Thêm vào giỏ hàng',
-                        style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${widget.product.name}',
+                            style: const TextStyle(
+                              color: Colors.deepOrangeAccent ,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+
+                        ],
                       ),
                     ),
+                  ],
+                ),
+
+
+                Row(
+
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    const Text(
+                      'Số lượng',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        if (quantity > 1) {
+                          setModalState(() {
+                            quantity--;
+                          });
+                          setState(() {});
+                        }
+                      },
+                      icon: const Icon(Icons.remove_circle_outline),
+                    ),
+                    Text(
+                      '$quantity',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        setModalState(() {
+                          quantity++;
+                        });
+                        setState(() {});
+                      },
+                      icon: const Icon(Icons.add_circle_outline),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: themeOrange,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    onPressed: () async{
+                      print('Đã nhấn Thêm vào giỏ hàng');
+                      await cartService.addProductToCart(auth.accountId.value, widget.product.id, quantity);
+
+                    },
+                    child: const Text(
+                      'Thêm vào giỏ hàng',
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+        ),
       ),
     );
   }
