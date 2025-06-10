@@ -170,7 +170,7 @@ class AuthService extends GetxController {
     if (Get.isRegistered<CartService>()) {
       try {
         final cartService = Get.find<CartService>();
-        cartService.reload(); // Tạo method này trong CartService nếu chưa có
+        update(); // Tạo method này trong CartService nếu chưa có
       } catch (e) {
         print('⚠️ Error clearing cart: $e');
       }
