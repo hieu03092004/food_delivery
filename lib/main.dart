@@ -1,65 +1,35 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:food_delivery/api/firebase_api.dart';
-import 'package:food_delivery/domains/authentication_respository/authentication_respository.dart';
-import 'package:food_delivery/domains/data_source/firebase_auth_service.dart';
-import 'package:food_delivery/pages/admin_pages/Bottom_nav_admin.dart';
-import 'package:food_delivery/pages/authentication/authenticaion_state/authenticationCubit.dart';
-import 'package:food_delivery/pages/authentication/bloc/login_cubit.dart';
-import 'package:food_delivery/pages/authentication/login_page.dart';
+import 'package:food_delivery/config/database.dart';
+
+import 'package:food_delivery/pages/authentication/PageAuthUser.dart';
 import 'package:food_delivery/pages/customer_pages/bottom_customer_nav.dart';
-import 'package:food_delivery/pages/shipper_pages/Bottom_nav_shipper.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:food_delivery/pages/customer_pages/cart/cart_page.dart';
 import 'package:food_delivery/pages/shipper_pages/Notifications/notifications.dart';
-import 'package:provider/provider.dart';
+import 'package:food_delivery/service/auth_servicae/AuthService.dart';
+import 'package:food_delivery/service/customer_service/Cart/cart_service.dart';
+import 'package:get/get.dart';
 import 'firebase_options.dart';
-import 'config/database.dart';
-import 'model/shipper_model/Notification_model.dart';
+
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // 1) Khởi tạo Firebase và Database
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  //await FirebaseApi().initNotifications();
   await Database.init();
+  // Put services vào GetX
+  Get.put(AuthService(), permanent: true);
+  Get.put(CartService(), permanent: true);
 
-  // 2) Build tree các Provider / Bloc
-  runApp(
-    MultiRepositoryProvider(
-      providers: [
-        // Đăng ký repo (dưới interface AuthenticationRepository)
-        RepositoryProvider<AuthenticationRepository>(
-          create: (_) => AuthenticationRepositoryImpl(FireBaseAuthService()),
-        ),
-      ],
-      child: MultiBlocProvider(
-        providers: [
-          // 3) LoginCubit chỉ lo việc gọi API login
-          BlocProvider<LoginCubit>(
-            create: (ctx) => LoginCubit(
-              authenticationRepository: ctx.read<AuthenticationRepository>(),
-              authenticationCubit: ctx.read<AuthenticationCubit>(),
-            ),
-          ),
-          // 4) AuthenticationCubit giữ thông tin user toàn app
-          BlocProvider<AuthenticationCubit>(
-            create: (_) => AuthenticationCubit(),
-          ),
-        ],
-        child: ChangeNotifierProvider(
-          // <-- thêm provider ở đây
-          create: (_) => NotificationProvider(2),
-          child: const MyApp(),
-        ),
-      ),
-    ),
-  );
+  runApp(const MyApp());
 }
+
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // nếu cần xử lý dữ liệu khi ở background
 }
+
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
@@ -94,24 +64,27 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       navigatorKey: navigatorKey,
-      title: 'Food Delivery',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.from(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      initialRoute: '/',
-      routes: {
-        '/': (ctx) => const LoginPage(),
-        '/adminHome': (context) {
-          final storeId = ModalRoute.of(context)!.settings.arguments as int;
-          return BottomNavAdmin(storeId: storeId);
-        },
-        '/shipperHome': (ctx) => const BottomNavShipper(),
-        '/customerHome': (ctx) => const BottomCustomerNav(),
-        '/notifications': (ctx) => const NotificationsPage(),
-      },
+      title: 'Flutter Demo',
+      theme: ThemeData(primarySwatch: Colors.deepOrange),
+      // Không dùng initialRoute, dùng Obx để chọn home
+      home: BottomCustomerNav(),
+      // Khai báo routes (nếu cần navigation by name)
+      getPages: [
+        GetPage(
+          name: '/cart',
+          page: () {
+            print("Loi roi ahuhu");
+            final id = Get.find<AuthService>().accountId.value;
+            return id != 0 ? CartPage(accountId: id) : const PageAuthUser();
+          },
+        ),
+        GetPage(name: '/login', page: () => const PageAuthUser()),
+        GetPage(name: '/notifications', page: () => const NotificationsPage()),
+        // ... thêm các route khác nếu cần
+      ],
     );
   }
 }
