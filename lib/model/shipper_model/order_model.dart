@@ -1,3 +1,6 @@
+
+import '../../config/database.dart';
+
 class Order {
   final int id;
   final int customerId;
@@ -36,7 +39,7 @@ class Order {
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
       id: json['order_id'] ?? 0,
-      customerId:json['customer_id']     as int,
+      customerId: json['customer_id'] as int,
       customerName: json['customer_name'] ?? '',
       storeName: json['store_name'] ?? '',
       productName: json['product_name'] ?? '',
@@ -47,9 +50,10 @@ class Order {
       imageUrl: json['thumbnail_url'] ?? '',
       status: json['status'] ?? '',
       shippingFee: (json['shipping_fee'] ?? 0).toDouble(),
-      orderDate: json['order_date'] != null
-          ? DateTime.parse(json['order_date'])
-          : DateTime.now(),
+      orderDate:
+          json['order_date'] != null
+              ? DateTime.parse(json['order_date'])
+              : DateTime.now(),
     );
   }
   @override
@@ -64,6 +68,7 @@ class Order {
         ')';
   }
 }
+
 class OrderWithItems {
   final int id;
   final int customerId;
@@ -87,12 +92,11 @@ class OrderWithItems {
     required this.items,
   });
 
-  int get totalProducts =>
-      items.fold(0, (sum, x) => sum + x.quantity);
+  int get totalProducts => items.fold(0, (sum, x) => sum + x.quantity);
 
   double get totalAmount =>
-      items.fold(0.0, (sum, x) => sum + x.discountedPrice * x.quantity)
-          + shippingFee;
+      items.fold(0.0, (sum, x) => sum + x.discountedPrice * x.quantity) +
+      shippingFee;
   @override
   String toString() {
     return 'OrderWithItems('
@@ -110,6 +114,7 @@ class OrderWithItems {
         ')';
   }
 }
+
 class UpdateOrderResult {
   final bool success;
   final String message;
@@ -124,4 +129,66 @@ class UpdateOrderResult {
     this.newStatus,
     this.newDbStatus,
   });
+}
+
+class OrderSnapshot {
+  static Future<List<OrderWithItems>> getOrdersByStatus(
+    String status,
+    int shipperId,
+  ) async {
+    try {
+      final raw = await Database.client.rpc(
+        'get_orders_by_status',
+        params: {'order_status': status, 'p_shipper_id': shipperId},
+      );
+
+      if (raw is! List) {
+        print('⚠️ Unexpected RPC result, not a List: $raw');
+        return [];
+      }
+
+      final flatOrders =
+          (raw as List<dynamic>).map((json) {
+            final o = Order.fromJson(json as Map<String, dynamic>);
+            return o;
+          }).toList();
+
+      final Map<int, List<Order>> buffer = {};
+      for (var o in flatOrders) {
+        buffer.putIfAbsent(o.id, () => []).add(o);
+      }
+
+      return buffer.entries.map((e) {
+        final items = e.value;
+        final first = items.first;
+        return OrderWithItems(
+          id: first.id,
+          customerId: first.customerId,
+          customerName: first.customerName,
+          storeName: first.storeName,
+          status: first.status,
+          statusText: first.statusText,
+          shippingFee: first.shippingFee,
+          orderDate: first.orderDate,
+          items: items,
+        );
+      }).toList();
+    } catch (e) {
+      print('Error fetching orders by status: $e');
+      return [];
+    }
+  }
+
+  static Future<bool> updateOrderStatus(int orderId, String newStatus) async {
+    try {
+      await Database.client
+          .from('orders')
+          .update({'status': newStatus})
+          .eq('order_id', orderId);
+      return true;
+    } catch (e) {
+      print('Error updating order status: $e');
+      return false;
+    }
+  }
 }

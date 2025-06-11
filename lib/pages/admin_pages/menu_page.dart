@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:food_delivery/pages/admin_pages/product/product_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:food_delivery/pages/admin_pages/home.dart';
 import 'package:food_delivery/pages/admin_pages/order/order_page.dart';
-import 'package:food_delivery/pages/admin_pages/notification_page.dart';
+import 'package:food_delivery/pages/admin_pages/store/store_page.dart';
+import 'package:food_delivery/pages/admin_pages/revenue_page.dart';
 
 class MenuPage extends StatelessWidget {
   final int storeId;
@@ -19,9 +19,11 @@ class MenuPage extends StatelessWidget {
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: storeStream,
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        if (!snapshot.hasData)
+          return Center(child: CircularProgressIndicator());
         final data = snapshot.data!;
-        if (data.isEmpty) return const Center(child: Text("Không tìm thấy cửa hàng"));
+        if (data.isEmpty)
+          return const Center(child: Text("Không tìm thấy cửa hàng"));
 
         final store = data.first;
 
@@ -38,25 +40,32 @@ class MenuPage extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 40,
-                      backgroundImage: store['image_url'] != null
-                          ? NetworkImage(store['image_url'])
-                          : null,
-                      child: store['image_url'] == null ? const Icon(Icons.store, size: 40) : null,
+                      backgroundImage:
+                          store['image_url'] != null
+                              ? NetworkImage(store['image_url'])
+                              : null,
+                      child:
+                          store['image_url'] == null
+                              ? const Icon(Icons.store, size: 40)
+                              : null,
                     ),
                     const SizedBox(height: 8),
                     Text(
                       store['name'] ?? 'Tên cửa hàng',
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               _buildNavItem(
                 context,
                 icon: Icons.info_outline,
                 label: 'Thông tin cửa hàng',
-                page: HomePages(storeId: storeId),
+                page: StorePage(storeId: storeId),
               ),
               _buildNavItem(
                 context,
@@ -68,13 +77,13 @@ class MenuPage extends StatelessWidget {
                 context,
                 icon: Icons.shopping_bag,
                 label: 'Đơn hàng',
-                page: OrdersPage(storeId: storeId,),
+                page: OrdersPage(storeId: storeId, status: 'pending'),
               ),
               _buildNavItem(
                 context,
                 icon: Icons.notifications,
-                label: 'Thông báo',
-                page: const NotificationsPage(),
+                label: 'Thống kê',
+                page: StoreRevenuePage(storeId: storeId),
               ),
             ],
           ),
@@ -83,7 +92,12 @@ class MenuPage extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(BuildContext context, {required IconData icon, required String label, required Widget page}) {
+  Widget _buildNavItem(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Widget page,
+  }) {
     return ListTile(
       leading: Icon(icon, color: Colors.teal),
       title: Text(label),

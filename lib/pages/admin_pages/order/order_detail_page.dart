@@ -49,8 +49,7 @@ class OrderDetailPage extends StatelessWidget {
         actions: <Widget>[
           if ((order.status ?? '').toLowerCase() == 'pending') ...[
             IconButton(
-              icon: const Icon(Icons.delivery_dining),
-              // tooltip: 'Phân công',
+              icon: Icon(Icons.delivery_dining),
               onPressed: () => _assignShipper(context),
             )
           ],
@@ -78,7 +77,6 @@ class OrderDetailPage extends StatelessWidget {
                 final price = item.product.discountPercent > 0
                     ? _getDiscountedPrice(item.product.price, item.product.discountPercent)
                     : item.product.price;
-                final totalPrice = price * item.quantity;
 
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
@@ -97,7 +95,7 @@ class OrderDetailPage extends StatelessWidget {
                   ),
                   subtitle: Text('Số lượng: ${item.quantity}'),
                   trailing: Text(
-                    '${(_getDiscountedPrice(item.product.price, item.product.discountPercent) * item.quantity).toStringAsFixed(0)} ${item.product.unit}',
+                    '${(price * item.quantity).toStringAsFixed(0)} ${item.product.unit}',
                     style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 15),
                   ),
                 );

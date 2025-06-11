@@ -9,16 +9,13 @@ class EditGenderPage extends StatefulWidget {
 
 class _EditGenderPageState extends State<EditGenderPage> {
   String? _selectedGender;
-  final Map<String, String> _uiToValue = {
-    'Nam': 'male',
-    'Nữ': 'female',
-  };
+  final Map<String, String> _uiToValue = {'Nam': 'male', 'Nữ': 'female'};
 
   void _saveGender() {
     if (_selectedGender == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng chọn giới tính')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Vui lòng chọn giới tính')));
       return;
     }
     final value = _uiToValue[_selectedGender]!;
@@ -51,17 +48,21 @@ class _EditGenderPageState extends State<EditGenderPage> {
             const SizedBox(height: 24),
             DropdownButtonFormField<String>(
               value: _selectedGender,
-              items: _uiToValue.keys.map((label) {
-                return DropdownMenuItem<String>(
-                  value: label,
-                  child: Text(label),
-                );
-              }).toList(),
+              items:
+                  _uiToValue.keys.map((label) {
+                    return DropdownMenuItem<String>(
+                      value: label,
+                      child: Text(label),
+                    );
+                  }).toList(),
               decoration: InputDecoration(
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
               ),
               hint: const Text('Chọn Nam hoặc Nữ'),
               onChanged: (val) => setState(() => _selectedGender = val),

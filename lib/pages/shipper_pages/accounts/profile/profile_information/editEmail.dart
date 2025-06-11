@@ -15,12 +15,12 @@ class _EditEmailPageState extends State<EditEmailPage> {
     super.dispose();
   }
 
-  void _saveEmail() async{
+  void _saveEmail() async {
     final newEmail = _emailController.text.trim();
     if (newEmail.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tên không được để trống')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Tên không được để trống')));
       return;
     }
     // TODO: Gửi name mới lên Supabase ở đây
@@ -50,7 +50,8 @@ class _EditEmailPageState extends State<EditEmailPage> {
             const SizedBox(height: 24),
             TextField(
               controller: _emailController,
-              keyboardType: TextInputType.emailAddress,       // 1) Kiểu bàn phím email
+              keyboardType:
+                  TextInputType.emailAddress, // 1) Kiểu bàn phím email
               autofillHints: const [AutofillHints.email],
               decoration: InputDecoration(
                 labelText: 'Email',
@@ -72,7 +73,10 @@ class _EditEmailPageState extends State<EditEmailPage> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text("Lưu", style: TextStyle(fontSize: 16,color: Colors.white)),
+                child: const Text(
+                  "Lưu",
+                  style: TextStyle(fontSize: 16, color: Colors.white),
+                ),
               ),
             ),
           ],

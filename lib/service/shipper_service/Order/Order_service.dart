@@ -1,12 +1,23 @@
 import 'dart:convert';
-
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:get/get.dart';
 
 import '../../../model/shipper_model/order_model.dart';
+import '../../../service/auth_servicae/AuthService.dart';
 
-class OrderService {
+class OrderService extends GetxController {
   final SupabaseClient _supabaseClient = Supabase.instance.client;
+  final Map<String, List<OrderWithItems>> _ordersByStatus = {};
+  final RxBool isLoading = false.obs;
+  final List<String> tabs = [
+    'Đã nhận đơn',
+    'Đang vận chuyển',
+    'Đã giao',
+    'Giao thất bại',
+    'Đã huỷ',
+  ];
   final Map<String, String> _uiToDbStatusMap = {
     'Đã nhận đơn': 'order_received',
     'Đang vận chuyển': 'in_transit',
@@ -27,39 +38,161 @@ class OrderService {
     'order_received': 'in_transit',
     'in_transit': 'delivered',
   };
-  Future<List<OrderWithItems>> getOrdersByUiStatus(String uiStatus,int UserId) async {
+
+  @override
+  void onInit() {
+    super.onInit();
+    debugPrint('🚀 Initializing OrderService');
+    // Load initial data for all tabs
+    for (var status in tabs) {
+      debugPrint('📥 Loading initial data for status: $status');
+      loadOrdersFor(status);
+    }
+  }
+
+  // Getter methods
+  List<OrderWithItems> getOrdersByStatus(String status) {
+    debugPrint('🔍 Getting orders for status: $status');
+    debugPrint(
+      '📦 Current orders in cache: ${_ordersByStatus[status]?.length ?? 0}',
+    );
+    if (_ordersByStatus[status] == null) {
+      debugPrint('⚠️ No data in cache for status: $status, triggering load');
+      loadOrdersFor(status);
+    }
+    return _ordersByStatus[status] ?? [];
+  }
+
+  Map<String, String> get dbToUiStatusMap => _dbToUiStatusMap;
+  Map<String, String> get nextStatusMap => _nextStatusMap;
+
+  // Load orders for a specific status
+  Future<void> loadOrdersFor(String uiStatus) async {
+    debugPrint('🔄 Loading orders for UI status: $uiStatus');
+    isLoading.value = true;
+    try {
+      final authService = Get.find<AuthService>();
+      final userId = authService.accountId.value;
+
+      if (userId == 0) {
+        debugPrint('❌ User not logged in');
+        throw Exception('User chưa login');
+      }
+
+      debugPrint('👤 User ID: $userId');
+      final list = await getOrdersByUiStatus(uiStatus, userId);
+      debugPrint('📦 Received ${list.length} orders for status: $uiStatus');
+
+      if (list.isNotEmpty) {
+        debugPrint('📝 First order details:');
+        debugPrint('- ID: ${list.first.id}');
+        debugPrint('- Status: ${list.first.status}');
+        debugPrint('- Items: ${list.first.items.length}');
+      }
+
+      _ordersByStatus[uiStatus] = list;
+      debugPrint(
+        '✅ Updated cache for status: $uiStatus with ${list.length} orders',
+      );
+      update();
+    } catch (e) {
+      debugPrint('❌ Error loading $uiStatus: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Process next status
+  Future<bool> processNextStatus(OrderWithItems order) async {
+    try {
+      final result = await processOrderStatusUpdate(order);
+      if (result.success && result.newStatus != null) {
+        // Reload orders for both old and new status
+        final oldStatus = _dbToUiStatusMap[order.status];
+        if (oldStatus != null) {
+          await loadOrdersFor(oldStatus);
+        }
+        await loadOrdersFor(result.newStatus!);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Error processing next status: $e');
+      return false;
+    }
+  }
+
+  // Process delivered failed
+  Future<bool> processDeliveredFailed(OrderWithItems order) async {
+    try {
+      final result = await processOrderDeliveredFailed(order);
+      if (result.success && result.newStatus != null) {
+        // Reload orders for both old and new status
+        final oldStatus = _dbToUiStatusMap[order.status];
+        if (oldStatus != null) {
+          await loadOrdersFor(oldStatus);
+        }
+        await loadOrdersFor(result.newStatus!);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Error processing delivered failed: $e');
+      return false;
+    }
+  }
+
+  Future<List<OrderWithItems>> getOrdersByUiStatus(
+    String uiStatus,
+    int UserId,
+  ) async {
+    debugPrint('🔄 Converting UI status to DB status');
     // Chuyển đổi từ nhãn UI tiếng Việt sang giá trị tiếng Anh trong DB
     final dbStatus = _uiToDbStatusMap[uiStatus];
 
     if (dbStatus == null) {
-      print('⚠️ Invalid UI status: $uiStatus');
+      debugPrint('⚠️ Invalid UI status: $uiStatus');
       return [];
     }
 
-    return await getOrdersByDbStatus(dbStatus,UserId);
+    debugPrint('✅ UI status: $uiStatus -> DB status: $dbStatus');
+    return await getOrdersByDbStatus(dbStatus, UserId);
   }
+
   // Lấy đơn hàng theo trạng thái
-  Future<List<OrderWithItems>> getOrdersByDbStatus(String dbStatus,int userID) async {
-    print("Status:${dbStatus}");
+  Future<List<OrderWithItems>> getOrdersByDbStatus(
+    String dbStatus,
+    int userID,
+  ) async {
+    debugPrint("🔍 Fetching orders with status: $dbStatus for userId: $userID");
     try {
-      print("🔍 Fetching orders with status: $dbStatus for userId: $userID");
-      final raw = await _supabaseClient
-          .rpc('get_orders_by_status', params: {'order_status': dbStatus, 'p_shipper_id': userID, });
-      print('raw pc result for status ${dbStatus}:$raw');
-      if(raw is!List){
-        print('⚠️ Unexpected RPC result, not a List: $raw');
+      final raw = await _supabaseClient.rpc(
+        'get_orders_by_status',
+        params: {'order_status': dbStatus, 'p_shipper_id': userID},
+      );
+      debugPrint('📦 Raw RPC result: $raw');
+
+      if (raw is! List) {
+        debugPrint('⚠️ Unexpected RPC result, not a List: $raw');
         return [];
       }
-      final List<dynamic>data=raw;
 
+      if (raw.isEmpty) {
+        debugPrint('ℹ️ No orders found for status: $dbStatus');
+        return [];
+      }
 
       // 1) Parse List<dynamic> -> List<Order>
-      final flatOrders = (raw as List<dynamic>).map((json) {
-        final o = Order.fromJson(json as Map<String, dynamic>);
-        o.statusText = _dbToUiStatusMap[o.status] ?? o.status;
-        o.totalAmount = o.discountedPrice * o.quantity + o.shippingFee;
-        return o;
-      }).toList();
+      final flatOrders =
+          (raw as List<dynamic>).map((json) {
+            debugPrint('📝 Parsing order: $json');
+            final o = Order.fromJson(json as Map<String, dynamic>);
+            o.statusText = _dbToUiStatusMap[o.status] ?? o.status;
+            o.totalAmount = o.discountedPrice * o.quantity + o.shippingFee;
+            return o;
+          }).toList();
+
+      debugPrint('📦 Parsed ${flatOrders.length} flat orders');
 
       // 2) Nhóm theo order.id
       final Map<int, List<Order>> buffer = {};
@@ -67,29 +200,34 @@ class OrderService {
         buffer.putIfAbsent(o.id, () => []).add(o);
       }
 
-      // 3) Build List<OrderWithItems> từ map
-      final grouped = buffer.entries.map((e) {
-        final items = e.value;
-        final first = items.first;
-        return OrderWithItems(
-          id: first.id,
-          customerId: first.customerId,
-          customerName: first.customerName,
-          storeName: first.storeName,
-          status: first.status,
-          statusText: first.statusText,
-          shippingFee: first.shippingFee,
-          orderDate: first.orderDate,
-          items: items,
-        );
-      }).toList();
+      debugPrint('📦 Grouped into ${buffer.length} orders');
 
+      // 3) Build List<OrderWithItems> từ map
+      final grouped =
+          buffer.entries.map((e) {
+            final items = e.value;
+            final first = items.first;
+            return OrderWithItems(
+              id: first.id,
+              customerId: first.customerId,
+              customerName: first.customerName,
+              storeName: first.storeName,
+              status: first.status,
+              statusText: first.statusText,
+              shippingFee: first.shippingFee,
+              orderDate: first.orderDate,
+              items: items,
+            );
+          }).toList();
+
+      debugPrint('📦 Final grouped orders: ${grouped.length}');
       return grouped;
     } catch (e) {
-      print('Error fetching orders by status: $e');
+      debugPrint('❌ Error fetching orders by status: $e');
       return [];
     }
   }
+
   // Cập nhật trạng thái đơn hàng tiếp theo
   Future<bool> updateOrderStatusToNext(OrderWithItems order) async {
     try {
@@ -112,6 +250,7 @@ class OrderService {
       return false;
     }
   }
+
   // Cập nhật trạng thái đơn hàng thành "Giao thất bại"
   Future<bool> updateOrderStatusToDeliveredFailed(int orderId) async {
     try {
@@ -126,14 +265,16 @@ class OrderService {
       return false;
     }
   }
+
   // Lấy device token của khách hàng
   Future<String?> getCustomerDeviceToken(int customerId) async {
     try {
-      final tokenRes = await _supabaseClient
-          .from('account')
-          .select('tokendevice')
-          .eq('account_id', customerId)
-          .single();
+      final tokenRes =
+          await _supabaseClient
+              .from('account')
+              .select('tokendevice')
+              .eq('account_id', customerId)
+              .single();
 
       final String? deviceToken = tokenRes['tokendevice'] as String?;
 
@@ -149,6 +290,7 @@ class OrderService {
       return null;
     }
   }
+
   // Tạo notification trong database
   Future<bool> createNotification({
     required int recipientId,
@@ -170,6 +312,7 @@ class OrderService {
       return false;
     }
   }
+
   // Gửi FCM notification
   Future<bool> sendFCMNotification({
     required String? deviceToken,
@@ -210,8 +353,11 @@ class OrderService {
       return false;
     }
   }
+
   // Xử lý cập nhật trạng thái và gửi thông báo (cho trạng thái tiếp theo)
-  Future<UpdateOrderResult> processOrderStatusUpdate(OrderWithItems order) async {
+  Future<UpdateOrderResult> processOrderStatusUpdate(
+    OrderWithItems order,
+  ) async {
     final currentDb = order.status;
     final nextDb = _nextStatusMap[currentDb];
 
@@ -243,7 +389,8 @@ class OrderService {
         content = 'Đơn hàng ${order.id} của bạn đã được giao thành công';
         titleNotifications = 'Giao kiện hàng thành công';
       } else {
-        content = 'Đơn hàng ${order.id} của bạn đang trong quá trình vận chuyển';
+        content =
+            'Đơn hàng ${order.id} của bạn đang trong quá trình vận chuyển';
         titleNotifications = 'Đang vận chuyển';
       }
 
@@ -274,14 +421,14 @@ class OrderService {
       );
     } catch (e) {
       print('❌ Lỗi khi xử lý cập nhật trạng thái: $e');
-      return UpdateOrderResult(
-        success: false,
-        message: 'Lỗi: $e',
-      );
+      return UpdateOrderResult(success: false, message: 'Lỗi: $e');
     }
   }
+
   // Xử lý cập nhật trạng thái thành "Giao thất bại"
-  Future<UpdateOrderResult> processOrderDeliveredFailed(OrderWithItems order) async {
+  Future<UpdateOrderResult> processOrderDeliveredFailed(
+    OrderWithItems order,
+  ) async {
     const String nextDb = 'delivered_failed';
     const String newUi = 'Giao thất bại';
     final String oldDb = order.status;
@@ -328,17 +475,14 @@ class OrderService {
       );
     } catch (e) {
       print('❌ Lỗi khi xử lý giao thất bại: $e');
-      return UpdateOrderResult(
-        success: false,
-        message: 'Lỗi: $e',
-      );
+      return UpdateOrderResult(success: false, message: 'Lỗi: $e');
     }
   }
+}
 
-  // Lấy map status để sử dụng trong UI
-  Map<String, String> get dbToUiStatusMap => _dbToUiStatusMap;
-  Map<String, String> get nextStatusMap => _nextStatusMap;
-
-
-
+class OrderBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut<OrderService>(() => OrderService());
+  }
 }

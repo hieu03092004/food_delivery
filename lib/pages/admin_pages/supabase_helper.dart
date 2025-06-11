@@ -46,6 +46,23 @@ Future<String> updateImage({
   return publicUrl + "?ts=${DateTime.now().microsecond}";
 }
 
+Future<Map<int, T>> getMapData<T>({
+  required String table,
+  required T Function(Map<String, dynamic> json) fromJson,
+  required int Function(T t) getID
+}) async{
+  Map<int, T> _map = {};
+  var data = await supabase.from(table).select();
+  var iterable = data.map((e) => fromJson(e),);
+
+  _map = Map.fromIterable(
+    iterable,
+    key: (t) => getID(t),
+    value: (t) => t,
+  );
+  return _map;
+}
+
 Stream<List<T>> getDataStream<T>({
   required String table,
   required List<String> ids,

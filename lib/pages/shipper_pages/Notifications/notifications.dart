@@ -1,43 +1,57 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import 'package:timeline_tile/timeline_tile.dart';
 import 'package:intl/intl.dart';
 
 import '../../../model/shipper_model/Notification_model.dart';
-import '../../authentication/authenticaion_state/authenticationCubit.dart'; // đường dẫn tới file provider của bạn
+import '../../../service/shipper_service/Notifications/notification_service.dart';
+import '../../../service/auth_servicae/AuthService.dart';
 
-class NotificationsPage extends StatefulWidget {
-  const NotificationsPage({Key? key}) : super(key: key);
+class NotificationsPage extends StatelessWidget {
+  NotificationsPage({Key? key}) : super(key: key) {
+    // Initialize notifications when the page is created
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final authService = Get.find<AuthService>();
+      final userId = authService.accountId.value;
 
-  @override
-  State<NotificationsPage> createState() => _NotificationsPageState();
-}
+      // Chỉ khởi tạo khi đã đăng nhập
+      if (userId != 0) {
+        if (!Get.isRegistered<NotificationService>()) {
+          debugPrint('Registering NotificationService with userId: $userId');
+          Get.put(NotificationService(userId), permanent: true);
+        } else {
+          debugPrint('NotificationService already registered');
+        }
 
-class _NotificationsPageState extends State<NotificationsPage> {
-  final _filters = ['today', 'yesterday', 'all'];
-
-  @override
-  void initState() {
-    super.initState();
-    // Lần đầu load “Hôm nay”
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final prov = context.read<NotificationProvider>();
-      prov.markReadByFilter('today')
-          .then((_) => prov.fetchByFilter('today'))
-          .then((_) => prov.fetchUnreadCount());
+        final service = Get.find<NotificationService>();
+        await service.initializeTodayNotifications();
+      } else {
+        debugPrint('User not logged in, skipping notification initialization');
+      }
     });
   }
 
+  final _filters = ['today', 'yesterday', 'all'];
+
   @override
   Widget build(BuildContext context) {
+    final authService = Get.find<AuthService>();
+    final notificationService = Get.find<NotificationService>();
+
+    // Nếu chưa đăng nhập, hiển thị thông báo
+    if (!authService.isLoggedIn) {
+      return const Scaffold(
+        body: Center(child: Text('Vui lòng đăng nhập để xem thông báo')),
+      );
+    }
+
     return DefaultTabController(
       length: _filters.length,
       child: Scaffold(
         appBar: AppBar(
           title: const Text(
             'Thông báo',
-            style: TextStyle(
-                color: Colors.black, fontWeight: FontWeight.bold),
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
           ),
           bottom: TabBar(
             indicatorColor: const Color(0xFFEF2B39),
@@ -45,10 +59,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
             unselectedLabelColor: Colors.black54,
             onTap: (index) {
               final f = _filters[index];
-              final prov = context.read<NotificationProvider>();
-              prov.markReadByFilter(f)
-                  .then((_) => prov.fetchByFilter(f))
-                  .then((_) => prov.fetchUnreadCount());
+              notificationService
+                  .markReadByFilter(f)
+                  .then((_) => notificationService.fetchByFilter(f))
+                  .then((_) => notificationService.fetchUnreadCount());
             },
             tabs: const [
               Tab(text: 'Hôm nay'),
@@ -57,24 +71,29 @@ class _NotificationsPageState extends State<NotificationsPage> {
             ],
           ),
         ),
-        body: Consumer<NotificationProvider>(
-          builder: (context, prov, _) {
-            final list = prov.notifications;
-            if (list.isEmpty) {
-              return const Center(child: Text('Không có thông báo nào'));
-            }
-            return ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: list.length,
-              itemBuilder: (ctx, i) {
-                return _NotificationTile(
-                  item: list[i],
-                  isLast: i == list.length - 1,
-                );
-              },
+        body: Obx(() {
+          if (notificationService.isLoading.value) {
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFFEF2B39)),
             );
-          },
-        ),
+          }
+
+          final list = notificationService.notifications;
+          if (list.isEmpty) {
+            return const Center(child: Text('Không có thông báo nào'));
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            itemCount: list.length,
+            itemBuilder: (ctx, i) {
+              return _NotificationTile(
+                item: list[i],
+                isLast: i == list.length - 1,
+              );
+            },
+          );
+        }),
       ),
     );
   }
@@ -84,11 +103,8 @@ class _NotificationTile extends StatelessWidget {
   final NotificationItem item;
   final bool isLast;
 
-  const _NotificationTile({
-    Key? key,
-    required this.item,
-    this.isLast = false,
-  }) : super(key: key);
+  const _NotificationTile({Key? key, required this.item, this.isLast = false})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -120,14 +136,12 @@ class _NotificationTile extends StatelessWidget {
     return TimelineTile(
       isFirst: false,
       isLast: isLast,
-      beforeLineStyle:
-      LineStyle(color: Colors.grey.shade300, thickness: 1),
+      beforeLineStyle: LineStyle(color: Colors.grey.shade300, thickness: 1),
       indicatorStyle: IndicatorStyle(
         width: 24,
         height: 24,
         color: bg,
-        iconStyle:
-        IconStyle(iconData: icon, color: bg.darken()),
+        iconStyle: IconStyle(iconData: icon, color: bg.darken()),
       ),
       endChild: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -159,17 +173,12 @@ class _NotificationTile extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 item.message,
-                style: const TextStyle(
-                    fontSize: 14, color: Colors.black87),
+                style: const TextStyle(fontSize: 14, color: Colors.black87),
               ),
               const SizedBox(height: 4),
               Text(
-                DateFormat('dd-MM-yyyy HH:mm')
-                    .format(item.createdAt),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                ),
+                DateFormat('dd-MM-yyyy HH:mm').format(item.createdAt),
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               ),
             ],
           ),

@@ -55,8 +55,17 @@ class Product {
     };
   }
 }
+
 class ProductSnapshot {
   static final supabase = Supabase.instance.client;
+
+  static Future<Map<int, Product>> getProduct() async {
+    return getMapData(
+      table: "product",
+      fromJson: (json) => Product.fromMap(json),
+      getID: (t) => t.id!,
+    );
+  }
 
   /// Cập nhật sản phẩm
   static Future<void> update(Product newProduct) async {
@@ -64,7 +73,10 @@ class ProductSnapshot {
       throw Exception("Sản phẩm không tồn tại.");
     }
 
-    if (newProduct.name.isEmpty || newProduct.price <= 0 || newProduct.unit.isEmpty || newProduct.categoryName.isEmpty) {
+    if (newProduct.name.isEmpty ||
+        newProduct.price <= 0 ||
+        newProduct.unit.isEmpty ||
+        newProduct.categoryName.isEmpty) {
       throw Exception("Vui lòng cung cấp đầy đủ thông tin sản phẩm.");
     }
     await supabase
@@ -75,7 +87,10 @@ class ProductSnapshot {
 
   /// Thêm sản phẩm mới
   static Future<void> insert(Product product) async {
-    if (product.name.isEmpty || product.price <= 0 || product.unit.isEmpty || product.categoryName.isEmpty) {
+    if (product.name.isEmpty ||
+        product.price <= 0 ||
+        product.unit.isEmpty ||
+        product.categoryName.isEmpty) {
       throw Exception("Vui lòng cung cấp đầy đủ thông tin sản phẩm.");
     }
     await supabase.from('product').insert(product.toMap());
@@ -83,14 +98,13 @@ class ProductSnapshot {
 
   /// Xoá sản phẩm và ảnh đi kèm nếu có
   static Future<void> delete(int id) async {
-    try{
+    try {
       print('Đây là id nè: ${id}');
       await supabase.from('product').delete().eq('product_id', id);
       await deleteImage(bucket: "images", path: "food/product_$id.jpg");
-    }catch(e){
+    } catch (e) {
       print('Loi roi ahuhu:{e}');
     }
-
   }
 
   /// Danh sách sản phẩm trong cache tạm thời

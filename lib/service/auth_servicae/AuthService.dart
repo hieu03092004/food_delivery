@@ -4,10 +4,12 @@ import 'package:food_delivery/pages/admin_pages/Bottom_nav_admin.dart';
 import 'package:food_delivery/pages/customer_pages/bottom_customer_nav.dart';
 import 'package:food_delivery/pages/shipper_pages/Bottom_nav_shipper.dart';
 import 'package:food_delivery/service/customer_service/Cart/cart_service.dart';
+import 'package:food_delivery/service/shipper_service/Notifications/notification_service.dart';
 import 'package:get/get.dart';
 import 'package:supabase_auth_ui/supabase_auth_ui.dart';
 
 import '../../model/shipper_model/Notification_model.dart';
+
 class AuthService extends GetxController {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -36,11 +38,12 @@ class AuthService extends GetxController {
     print('🔥 HandleSignIn started with UUID: $userUUID');
 
     try {
-      final resp = await _supabase
-          .from('account')
-          .select('account_id, role_name, store_id')
-          .eq('user_id', userUUID)
-          .single();
+      final resp =
+          await _supabase
+              .from('account')
+              .select('account_id, role_name, store_id')
+              .eq('user_id', userUUID)
+              .single();
 
       final record = resp as Map<String, dynamic>;
       final newAccountId = (record['account_id'] as num).toInt();
@@ -57,44 +60,46 @@ class AuthService extends GetxController {
         storeId.value = newStoreId.toInt();
       }
 
-      // XỬ LÝ NOTIFICATION PROVIDER Ở ĐÂY
-      await _setupNotificationProvider(newAccountId);
-
-      // Xử lý FCM token
+      // 1. Xử lý FCM token trước
       await _handleFCMToken(newAccountId);
 
-      // Reload cart
+      // 2. Khởi tạo NotificationService
+      await _setupNotificationService(newAccountId);
+
+      // 3. Reload cart
       final cartService = Get.find<CartService>();
       await cartService.reload();
 
-      // Điều hướng theo role
+      // 4. Điều hướng theo role
       _navigateByRole(newRoleName, newStoreId?.toInt());
 
       update();
       print(' HandleSignIn completed');
-
     } catch (e) {
       print(' Error in handleSignIn: $e');
     }
   }
 
-  // Tách riêng việc setup NotificationProvider
-  Future<void> _setupNotificationProvider(int accountId) async {
-    print('🔔 Setting up NotificationProvider for accountId: $accountId');
+  // Tách riêng việc setup NotificationService
+  Future<void> _setupNotificationService(int accountId) async {
+    print('🔔 Setting up NotificationService for accountId: $accountId');
 
     // Nếu có instance cũ, xóa đi
-    if (Get.isRegistered<NotificationProvider>()) {
-      print('🗑️ Deleting old NotificationProvider');
-      Get.delete<NotificationProvider>();
+    if (Get.isRegistered<NotificationService>()) {
+      print('🗑️ Deleting old NotificationService');
+      Get.delete<NotificationService>();
     }
 
     // Tạo instance mới với accountId đúng
-    print('🆕 Creating new NotificationProvider with userId: $accountId');
-    Get.put(NotificationProvider(accountId), permanent: true);
+    print('🆕 Creating new NotificationService with userId: $accountId');
+    Get.put(NotificationService(accountId), permanent: true);
+
+    // Đợi cho đến khi NotificationService được khởi tạo xong
+    await Future.delayed(const Duration(milliseconds: 100));
 
     // Fetch unread count CHỈ MỘT LẦN
     print('📬 Fetching unread count...');
-    await Get.find<NotificationProvider>().fetchUnreadCount();
+    await Get.find<NotificationService>().fetchUnreadCount();
   }
 
   Future<void> _handleFCMToken(int accountId) async {
@@ -137,12 +142,22 @@ class AuthService extends GetxController {
     try {
       print('🚪 Starting sign out process...');
 
+      // Reset cart count khi đăng xuất
+      if (Get.isRegistered<CartService>()) {
+        try {
+          final cartService = Get.find<CartService>();
+          cartService.distinctCount.value = 0;
+          print('🗑️ Cart count reset');
+        } catch (e) {
+          print('⚠️ Error resetting cart count: $e');
+        }
+      }
+
       // Gọi Supabase signOut để xóa session
       await _supabase.auth.signOut();
 
       // _handleSignOut sẽ được gọi tự động thông qua onAuthStateChange listener
       print('✅ Sign out completed');
-
     } catch (e) {
       print('❌ Error during sign out: $e');
       // Nếu có lỗi với Supabase, vẫn thực hiện cleanup local
@@ -160,19 +175,20 @@ class AuthService extends GetxController {
     roleName.value = '';
     storeId.value = 0;
 
-    // Xóa NotificationProvider
-    if (Get.isRegistered<NotificationProvider>()) {
-      print('🗑️ Deleting NotificationProvider');
-      Get.delete<NotificationProvider>();
+    // Xóa NotificationService
+    if (Get.isRegistered<NotificationService>()) {
+      print('🗑️ Deleting NotificationService');
+      Get.delete<NotificationService>();
     }
 
-    // Clear cart nếu có
+    // Reset cart count
     if (Get.isRegistered<CartService>()) {
       try {
         final cartService = Get.find<CartService>();
-        update(); // Tạo method này trong CartService nếu chưa có
+        cartService.distinctCount.value = 0;
+        print('🗑️ Cart count reset');
       } catch (e) {
-        print('⚠️ Error clearing cart: $e');
+        print('⚠️ Error resetting cart count: $e');
       }
     }
 
@@ -185,4 +201,3 @@ class AuthService extends GetxController {
 
   bool get isLoggedIn => accountId.value != 0;
 }
-

@@ -210,25 +210,15 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
                         value: category,
                         child: Text(category),
                       )),
-                      DropdownMenuItem(
-                        value: '__add_new__',
-                        child: Text('+ Thêm danh mục mới'),
-                      ),
                     ],
                     onChanged: (value) {
-                      if (value == '__add_new__') {
-                        setState(() {
-                          isAddingNewCategory = true;
-                          selectedCategory = null;
-                        });
-                      } else {
+
                         setState(() {
                           selectedCategory = value;
                         });
-                      }
                     },
                     validator: (value) {
-                      if (!isAddingNewCategory && (value == null || value.isEmpty)) {
+                      if (value == null || value.isEmpty){
                         return 'Vui lòng chọn danh mục';
                       }
                       return null;

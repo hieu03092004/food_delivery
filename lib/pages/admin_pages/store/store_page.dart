@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:food_delivery/pages/admin_pages/store/store_update_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -35,10 +36,7 @@ class _StorePageState extends State<StorePage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder:
-                      (context) => PageUpdateStore(
-                        storeId: widget.storeId,
-                      ), // Chuyển storeId khi cần
+                  builder: (context) => PageUpdateStore(storeId: widget.storeId), // Chuyển storeId khi cần
                 ),
               );
             }, // Khi nhấn sẽ gọi hàm này
@@ -67,8 +65,7 @@ class _StorePageState extends State<StorePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Hiển thị ảnh cửa hàng nếu có
-                if (store['image_url'] != null &&
-                    store['image_url'].toString().isNotEmpty)
+                if (store['image_url'] != null && store['image_url'].toString().isNotEmpty)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Image.network(
@@ -94,11 +91,7 @@ class _StorePageState extends State<StorePage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 20,
-                      color: Colors.grey,
-                    ),
+                    Icon(Icons.location_on_outlined, size: 20, color: Colors.grey),
                     SizedBox(width: 4),
                     Flexible(
                       child: Text(
@@ -116,15 +109,9 @@ class _StorePageState extends State<StorePage> {
                   children: [
                     Icon(Icons.access_time, size: 22, color: Colors.teal),
                     SizedBox(width: 8),
-                    Text(
-                      "Giờ mở cửa",
-                      style: TextStyle(fontWeight: FontWeight.w500),
-                    ),
+                    Text("Giờ mở cửa", style: TextStyle(fontWeight: FontWeight.w500)),
                     Spacer(),
-                    Text(
-                      store['open_time'] ?? '',
-                      style: TextStyle(color: Colors.black87),
-                    ),
+                    Text(store['open_time'] ?? '', style: TextStyle(color: Colors.black87)),
                   ],
                 ),
                 SizedBox(height: 10),
@@ -132,21 +119,11 @@ class _StorePageState extends State<StorePage> {
                 // Giờ đóng cửa
                 Row(
                   children: [
-                    Icon(
-                      Icons.access_time_filled,
-                      size: 22,
-                      color: Colors.teal,
-                    ),
+                    Icon(Icons.access_time_filled, size: 22, color: Colors.teal),
                     SizedBox(width: 8),
-                    Text(
-                      "Giờ đóng cửa",
-                      style: TextStyle(fontWeight: FontWeight.w500),
-                    ),
+                    Text("Giờ đóng cửa", style: TextStyle(fontWeight: FontWeight.w500)),
                     Spacer(),
-                    Text(
-                      store['close_time'] ?? '',
-                      style: TextStyle(color: Colors.black87),
-                    ),
+                    Text(store['close_time'] ?? '', style: TextStyle(color: Colors.black87)),
                   ],
                 ),
                 SizedBox(height: 10),
@@ -173,19 +150,14 @@ class _StorePageState extends State<StorePage> {
                 //   ],
                 // ),
                 // SizedBox(height: 10),
+
                 Row(
                   children: [
                     Icon(Icons.money, size: 22, color: Colors.teal),
                     SizedBox(width: 8),
-                    Text(
-                      "Hoa hồng shipper",
-                      style: TextStyle(fontWeight: FontWeight.w500),
-                    ),
+                    Text("Hoa hồng shipper", style: TextStyle(fontWeight: FontWeight.w500)),
                     Spacer(),
-                    Text(
-                      store['shipper_commission']?.toString() ?? 'Chưa có',
-                      style: TextStyle(color: Colors.black87),
-                    ),
+                    Text(store['shipper_commission']?.toString() ?? 'Chưa có', style: TextStyle(color: Colors.black87)),
                   ],
                 ),
               ],

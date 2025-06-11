@@ -32,9 +32,9 @@ class _EditDateOfBirthPageState extends State<EditDateOfBirthPage> {
 
   void _saveDate() {
     if (_selectedDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng chọn ngày sinh')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Vui lòng chọn ngày sinh')));
       return;
     }
     Navigator.pop(context, _selectedDate);

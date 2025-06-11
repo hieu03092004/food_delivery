@@ -1,21 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:food_delivery/service/auth_servicae/AuthService.dart';
 
-import 'package:provider/provider.dart';
-
-import '../../authentication/authenticaion_state/authenticationCubit.dart';
 class HomePages extends StatelessWidget {
   const HomePages({super.key});
 
-
   @override
   Widget build(BuildContext context) {
-    final authState = context.watch<AuthenticationCubit>().state;
-    final int? uid = authState.user?.uid;
+    final authService = Get.find<AuthService>();
 
-    print("Userid:${uid}");
-    return  Scaffold(
+    return Scaffold(
       body: Center(
-        child: Text("Trang chủ của shipper"),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text("Trang chủ của shipper"),
+            SizedBox(height: 20),
+            Obx(
+              () => Text(
+                "User ID: ${authService.accountId.value}",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
