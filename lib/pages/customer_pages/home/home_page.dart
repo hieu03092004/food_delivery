@@ -21,9 +21,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CommonAppBar(
-        title: "Khám phá món ngon",
-      ),
+      appBar: CommonAppBar(title: "Khám phá món ngon"),
       backgroundColor: Colors.grey[200],
       body: Container(
         child: Column(
@@ -54,89 +52,102 @@ class _HomePageState extends State<HomePage> {
                   }
                   final stores = snapshot.data ?? [];
                   // Filter theo searchQuery (case-insensitive)
-                  final filtered = _searchQuery.isEmpty
-                      ? stores
-                      : stores.where((p) =>
-                      p.name.toLowerCase().contains(_searchQuery.toLowerCase())
-                  ).toList();
+                  final filtered =
+                      _searchQuery.isEmpty
+                          ? stores
+                          : stores
+                              .where(
+                                (p) => p.name.toLowerCase().contains(
+                                  _searchQuery.toLowerCase(),
+                                ),
+                              )
+                              .toList();
                   if (filtered.isEmpty) {
-                    return const Center(child: Text('Không tìm thấy store nào'));
+                    return const Center(
+                      child: Text('Không tìm thấy store nào'),
+                    );
                   }
                   return ListView.separated(
-                      itemBuilder: (context, index) {
-                        Store store = filtered[index];
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ProductPage(store : store),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            margin: EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 6
+                    itemBuilder: (context, index) {
+                      Store store = filtered[index];
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ProductPage(store: store),
                             ),
-                            padding: EdgeInsets.all(5),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                          );
+                        },
+                        child: Container(
+                          margin: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
+                          padding: EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
 
-                              children: [
-                                Expanded(
-                                  flex: 1,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: AspectRatio(
-                                      aspectRatio: 1,
-                                      child: Container(
-                                        width: 80,
-                                        height: 100,
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                            color: Colors.transparent,  // màu viền
-                                            width: 4,            // độ dày viền
-                                          ),
-                                          borderRadius: BorderRadius.circular(12), // bo góc nếu muốn
-                                          image: DecorationImage(
-                                            image: NetworkImage(store.imageURL),
-                                            fit: BoxFit.cover,
-                                          ),
+                            children: [
+                              Expanded(
+                                flex: 1,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: AspectRatio(
+                                    aspectRatio: 1,
+                                    child: Container(
+                                      width: 80,
+                                      height: 100,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: Colors.transparent, // màu viền
+                                          width: 4, // độ dày viền
+                                        ),
+                                        borderRadius: BorderRadius.circular(
+                                          12,
+                                        ), // bo góc nếu muốn
+                                        image: DecorationImage(
+                                          image: NetworkImage(store.imageURL),
+                                          fit: BoxFit.cover,
                                         ),
                                       ),
                                     ),
                                   ),
                                 ),
+                              ),
 
-                                Expanded(
-                                  flex: 2,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 5
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                              Expanded(
+                                flex: 2,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 5),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
 
-                                      children: [
-                                        Text('${store.name}',style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),)
-                                      ],
-                                    ),
+                                    children: [
+                                      Text(
+                                        '${store.name}',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        );
-
-                      },
-                      separatorBuilder: (context, index) =>  SizedBox.shrink(),
-                      itemCount: filtered.length);
+                        ),
+                      );
+                    },
+                    separatorBuilder: (context, index) => SizedBox.shrink(),
+                    itemCount: filtered.length,
+                  );
                 },
               ),
             ),
@@ -146,5 +157,3 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
-
-

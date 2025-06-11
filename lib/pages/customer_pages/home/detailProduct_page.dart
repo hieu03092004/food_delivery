@@ -17,7 +17,6 @@ class DetailProductPage extends StatefulWidget {
 
   @override
   State<DetailProductPage> createState() => _DetailProductPageState();
-
 }
 
 class _DetailProductPageState extends State<DetailProductPage> {
@@ -26,10 +25,8 @@ class _DetailProductPageState extends State<DetailProductPage> {
   final cartService = Get.find<CartService>();
   final auth = Get.find<AuthService>();
 
-
   @override
   Widget build(BuildContext context) {
-
     print("Đã vào trang chi tiết sản phẩm");
 
     return Scaffold(
@@ -87,7 +84,6 @@ class _DetailProductPageState extends State<DetailProductPage> {
                                 ),
                               ),
                             ),
-
                           ],
                         ),
                         const SizedBox(height: 4),
@@ -102,16 +98,14 @@ class _DetailProductPageState extends State<DetailProductPage> {
                         Text(
                           '${widget.product.priceText}',
                           style: const TextStyle(
-                            color: Colors.deepOrangeAccent ,
+                            color: Colors.deepOrangeAccent,
                             fontSize: 23,
                             fontWeight: FontWeight.bold,
-
                           ),
                         ),
                       ],
                     ),
                   ),
-
                 ],
               ),
             ),
@@ -123,11 +117,10 @@ class _DetailProductPageState extends State<DetailProductPage> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [Colors.teal, themeOrange],
-                stops: [0.5, 0.5],              // mỗi màu chiếm 50%
+                stops: [0.5, 0.5], // mỗi màu chiếm 50%
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
-
             ),
             child: Row(
               children: [
@@ -138,7 +131,11 @@ class _DetailProductPageState extends State<DetailProductPage> {
                       _showAddToCartModal();
                     },
                     child: Center(
-                      child: Icon(Icons.shopping_cart, color: Colors.white, size: 25),
+                      child: Icon(
+                        Icons.shopping_cart,
+                        color: Colors.white,
+                        size: 25,
+                      ),
                     ),
                   ),
                 ),
@@ -162,128 +159,125 @@ class _DetailProductPageState extends State<DetailProductPage> {
               ],
             ),
           ),
-
         ],
       ),
     );
   }
 
-
-
   void _showAddToCartModal() {
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) =>
-          Container(
-            decoration: BoxDecoration(
-
-            ),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Image.network(
-                      widget.product.thumbnailURL,
-                      width: 80,
-                      height: 80,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 80,
-                          height: 80,
-                          color: Colors.grey[200],
-                          child: const Icon(Icons.image_not_supported),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+      builder:
+          (context) => StatefulBuilder(
+            builder:
+                (context, setModalState) => Container(
+                  decoration: BoxDecoration(),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          Text(
-                            '${widget.product.name}',
-                            style: const TextStyle(
-                              color: Colors.deepOrangeAccent ,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-
+                          Image.network(
+                            widget.product.thumbnailURL,
+                            width: 80,
+                            height: 80,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: 80,
+                                height: 80,
+                                color: Colors.grey[200],
+                                child: const Icon(Icons.image_not_supported),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${widget.product.name}',
+                                  style: const TextStyle(
+                                    color: Colors.deepOrangeAccent,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 4),
-
                         ],
                       ),
-                    ),
-                  ],
-                ),
 
-
-                Row(
-
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    const Text(
-                      'Số lượng',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        if (quantity > 1) {
-                          setModalState(() {
-                            quantity--;
-                          });
-                          setState(() {});
-                        }
-                      },
-                      icon: const Icon(Icons.remove_circle_outline),
-                    ),
-                    Text(
-                      '$quantity',
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        setModalState(() {
-                          quantity++;
-                        });
-                        setState(() {});
-                      },
-                      icon: const Icon(Icons.add_circle_outline),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: themeOrange,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          const Text(
+                            'Số lượng',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              if (quantity > 1) {
+                                setModalState(() {
+                                  quantity--;
+                                });
+                                setState(() {});
+                              }
+                            },
+                            icon: const Icon(Icons.remove_circle_outline),
+                          ),
+                          Text(
+                            '$quantity',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              setModalState(() {
+                                quantity++;
+                              });
+                              setState(() {});
+                            },
+                            icon: const Icon(Icons.add_circle_outline),
+                          ),
+                        ],
                       ),
-                    ),
-                    onPressed: () async{
-                      print('Đã nhấn Thêm vào giỏ hàng');
-                      await cartService.addProductToCart(auth.accountId.value, widget.product.id, quantity);
-
-                    },
-                    child: const Text(
-                      'Thêm vào giỏ hàng',
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: themeOrange,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          onPressed: () async {
+                            print('Đã nhấn Thêm vào giỏ hàng');
+                            await cartService.addProductToCart(
+                              auth.accountId.value,
+                              widget.product.id,
+                              quantity,
+                            );
+                          },
+                          child: const Text(
+                            'Thêm vào giỏ hàng',
+                            style: TextStyle(fontSize: 16, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-        ),
-      ),
+          ),
     );
   }
 }

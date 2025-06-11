@@ -7,172 +7,258 @@ import 'package:food_delivery/pages/admin_pages/product/product_update_page.dart
 import '../../../model/admin_model/product_model.dart';
 import '../../dialog/dialogs.dart';
 
-class ProductPage extends StatelessWidget {
+class ProductPage extends StatefulWidget {
   ProductPage({super.key, required this.storeId});
   final int storeId;
-  late BuildContext myContext;
 
-  /// Tính giá sau khi áp dụng giảm giá
+  @override
+  State<ProductPage> createState() => _ProductPageState();
+}
+
+class _ProductPageState extends State<ProductPage> {
+  late Future<Map<int, Product>> _future;
+  Map<int, Product> _products = {};
+  late BuildContext myContext;
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+
+    ProductSnapshot.listenDataChange(
+      _products,
+      updateUI: () {
+        _loadData();
+      },
+    );
+  }
+
+  void _loadData() {
+    _future = ProductSnapshot.getProduct().then((data) {
+      _products = data;
+      return data;
+    });
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    ProductSnapshot.unsubscribeListenProductChange();
+    super.dispose();
+  }
+
+  /// Tính giá sau giảm
   String _getDiscountedPrice(double price, double discountPercent) {
     final discounted = price * (1 - discountPercent / 100);
     return discounted.toStringAsFixed(0);
   }
+
   @override
   Widget build(BuildContext context) {
+    myContext = context;
     return Scaffold(
-      appBar: AppBar(title:
-        Text("Sản phẩm theo danh mục")
-      ),
-      body: StreamBuilder<List<Product>>(
-        stream: ProductSnapshot.getProductStream(),
+      appBar: AppBar(title: Text("Sản phẩm theo danh mục")),
+      body: FutureBuilder<Map<int, Product>>(
+        future: _future,
         builder: (context, snapshot) {
           return AsyncWidget(
             snapshot: snapshot,
             builder: (context, snapshot) {
-              final allProducts = snapshot.data!
-                  .where((p) => p.storeId == storeId)
-                  .toList();
+              final allProducts =
+                  snapshot.data!.values
+                      .where((p) => p.storeId == widget.storeId)
+                      .toList();
 
-              final categories = allProducts
-                  .map((p) => p.categoryName)
-                  .toSet()
-                  .toList()
-                ..sort();
+              final categories =
+                  allProducts.map((p) => p.categoryName).toSet().toList()
+                    ..sort();
 
               return ListView.builder(
                 itemCount: categories.length,
                 itemBuilder: (context, index) {
-                  myContext = context;
                   final category = categories[index];
-                  final productsInCategory = allProducts
-                      .where((p) => p.categoryName == category)
-                      .toList();
+                  final productsInCategory =
+                      allProducts
+                          .where((p) => p.categoryName == category)
+                          .toList();
 
                   return ExpansionTile(
                     title: Text(category),
-                    children: productsInCategory.map<Widget>((product) {
-                      return Slidable(
-                        key: ValueKey(product.id),
-                        endActionPane: ActionPane(
-                          extentRatio: 0.6,
-                          motion: const ScrollMotion(),
-                          children: [
-                            SlidableAction  (
-                              onPressed: (context) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => PageUpdateProduct(product: product),
-                                  ),
-                                );
-                              },
-                              backgroundColor: Colors.blue,
-                              foregroundColor: Colors.white,
-                              icon: Icons.edit,
-                              label: 'Cập nhật',
+                    children:
+                        productsInCategory.map<Widget>((product) {
+                          return Slidable(
+                            key: ValueKey(product.id),
+                            endActionPane: ActionPane(
+                              extentRatio: 0.6,
+                              motion: const ScrollMotion(),
+                              children: [
+                                SlidableAction(
+                                  onPressed: (context) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) => PageUpdateProduct(
+                                              product: product,
+                                            ),
+                                      ),
+                                    );
+                                  },
+                                  backgroundColor: Colors.blue,
+                                  foregroundColor: Colors.white,
+                                  icon: Icons.edit,
+                                  label: 'Cập nhật',
+                                ),
+                                SlidableAction(
+                                  onPressed: (context) async {
+                                    final confirm = await showConfirmDialog(
+                                      myContext,
+                                      "Bạn có muốn xoá sản phẩm '${product.name}' không?",
+                                    );
+                                    if (confirm == 'ok') {
+                                      try {
+                                        if (product.id != null) {
+                                          await ProductSnapshot.delete(
+                                            product.id!,
+                                          );
+                                          _loadData(); // Cập nhật danh sách
+                                          ScaffoldMessenger.of(
+                                            myContext,
+                                          ).clearSnackBars();
+                                          ScaffoldMessenger.of(
+                                            myContext,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                "Đã xoá sản phẩm '${product.name}'",
+                                              ),
+                                              duration: Duration(seconds: 3),
+                                            ),
+                                          );
+                                        } else {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                "Lỗi: ID sản phẩm bị null",
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        print("Lỗi khi xoá: $e");
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              "Không thể xoá sản phẩm.",
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.white,
+                                  icon: Icons.delete_forever,
+                                  label: 'Xoá',
+                                ),
+                              ],
                             ),
-                            SlidableAction(
-                              onPressed: (context) async {
-                                final confirm = await showConfirmDialog(
-                                    myContext,
-                                    "Bạn có muốn xoá sản phẩm '${product.name}' không?"
-                                );
-
-                                if (confirm == 'ok') {
-                                  await ProductSnapshot.delete(product.id!);
-                                  ScaffoldMessenger.of(myContext).showSnackBar(
-                                    SnackBar(
-                                      content: Text("Đã xoá sản phẩm '${product.name}'"),
-                                      duration: const Duration(seconds: 2),
+                            child: Opacity(
+                              opacity: product.isDeleted ? 0.5 : 1.0,
+                              child: Container(
+                                color:
+                                    product.isDeleted
+                                        ? Colors.grey.shade100
+                                        : null,
+                                child: ListTile(
+                                  leading:
+                                      product.thumbnailUrl.isNotEmpty
+                                          ? Image.network(
+                                            product.thumbnailUrl,
+                                            width: 50,
+                                            height: 50,
+                                            fit: BoxFit.cover,
+                                          )
+                                          : Icon(Icons.fastfood, size: 40),
+                                  title: Text(
+                                    product.name,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
                                     ),
-                                  );
-                                }
-                              },
-                              backgroundColor: Colors.red,
-                              foregroundColor: Colors.white,
-                              icon: Icons.delete_forever,
-                              label: 'Xoá',
-                            ),
-                          ],
-                        ),
-                        child: Opacity(
-                          opacity: product.isDeleted ? 0.5 : 1.0,
-                          child: Container(
-                            color: product.isDeleted ? Colors.grey.shade100 : null,
-                            child: ListTile(
-                              leading: product.thumbnailUrl.isNotEmpty
-                                  ? Image.network(
-                                product.thumbnailUrl,
-                                width: 50,
-                                height: 50,
-                                fit: BoxFit.cover,
-                              )
-                                  : Icon(Icons.fastfood, size: 40),
-                              title: Text(
-                                product.name,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
+                                  ),
+                                  subtitle:
+                                      product.description.isNotEmpty
+                                          ? Text(
+                                            product.description,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              color:
+                                                  product.isDeleted
+                                                      ? Colors.grey
+                                                      : null,
+                                            ),
+                                          )
+                                          : null,
+                                  trailing: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      if (product.discountPercent > 0) ...[
+                                        Text(
+                                          '${product.price.toStringAsFixed(0)} ${product.unit}',
+                                          style: TextStyle(
+                                            decoration:
+                                                TextDecoration.lineThrough,
+                                            color: Colors.grey,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        Text(
+                                          '${_getDiscountedPrice(product.price, product.discountPercent)} ${product.unit}',
+                                          style: TextStyle(
+                                            color: Colors.red,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        Text(
+                                          '-${product.discountPercent.toStringAsFixed(0)}%',
+                                          style: TextStyle(
+                                            color: Colors.red,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ] else
+                                        Text(
+                                          '${product.price.toStringAsFixed(0)} ${product.unit}',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) => PageProductDetail(
+                                              product: product,
+                                            ),
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
-                              subtitle: product.description.isNotEmpty
-                                  ? Text(
-                                product.description,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: product.isDeleted ? Colors.grey : null,
-                                ),
-                              )
-                                  : null,
-                              trailing: Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  if (product.discountPercent > 0) ...[
-                                    Text(
-                                      '${product.price.toStringAsFixed(0)} ${product.unit}',
-                                      style: TextStyle(
-                                        decoration: TextDecoration.lineThrough,
-                                        color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    Text(
-                                      '${_getDiscountedPrice(product.price, product.discountPercent)} ${product.unit}',
-                                      style: TextStyle(
-                                        color: Colors.red,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    Text(
-                                      '-${product.discountPercent.toStringAsFixed(0)}%',
-                                      style: TextStyle(color: Colors.red, fontSize: 12),
-                                    ),
-                                  ] else
-                                    Text(
-                                      '${product.price.toStringAsFixed(0)} ${product.unit}',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => PageProductDetail(product: product),
-                                  ),
-                                );
-                              },
                             ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
+                          );
+                        }).toList(),
                   );
                 },
               );
@@ -185,7 +271,7 @@ class ProductPage extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => PageAddProduct(storeId: storeId),
+              builder: (context) => PageAddProduct(storeId: widget.storeId),
             ),
           );
         },

@@ -11,21 +11,14 @@ import 'package:food_delivery/widget/default_appBar.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
-
-
 class ProductPage extends StatefulWidget {
-
-  final Store store;  // tên trường
+  final Store store; // tên trường
 
   // constructor: required this.storeId (khớp trường bên trên)
-  const ProductPage({
-    Key? key,
-    required this.store,
-  }) : super(key: key);
+  const ProductPage({Key? key, required this.store}) : super(key: key);
 
   @override
   State<ProductPage> createState() => _ProductPageState();
-
 }
 
 class _ProductPageState extends State<ProductPage> {
@@ -42,8 +35,8 @@ class _ProductPageState extends State<ProductPage> {
   // 1. Khởi tạo formatter cho tiền tệ Việt Nam
   final NumberFormat moneyFmt = NumberFormat.simpleCurrency(
     locale: 'vi_VN',
-    decimalDigits: 0,      // không hiện số thập phân
-    name: 'đ',             // ký hiệu đặt cuối chuỗi
+    decimalDigits: 0, // không hiện số thập phân
+    name: 'đ', // ký hiệu đặt cuối chuỗi
   );
   final auth = Get.find<AuthService>();
   final cartService = Get.find<CartService>();
@@ -52,7 +45,7 @@ class _ProductPageState extends State<ProductPage> {
   Widget build(BuildContext context) {
     print("Đã vào trang sản phẩm");
     return Scaffold(
-      appBar:  CommonAppBar(title: widget.store.name,),
+      appBar: CommonAppBar(title: widget.store.name),
       backgroundColor: Colors.grey[200],
       body: Container(
         child: Column(
@@ -63,7 +56,6 @@ class _ProductPageState extends State<ProductPage> {
               child: SearchBar(
                 hintText: 'Tìm món ăn...',
                 onChanged: (q) => setState(() => _searchQuery = q),
-
               ),
             ),
 
@@ -84,11 +76,16 @@ class _ProductPageState extends State<ProductPage> {
                   }
                   final products = snapshot.data ?? [];
                   // Filter theo searchQuery (case-insensitive)
-                  final filtered = _searchQuery.isEmpty
-                      ? products
-                      : products.where((p) =>
-                      p.name.toLowerCase().contains(_searchQuery.toLowerCase())
-                  ).toList();
+                  final filtered =
+                      _searchQuery.isEmpty
+                          ? products
+                          : products
+                              .where(
+                                (p) => p.name.toLowerCase().contains(
+                                  _searchQuery.toLowerCase(),
+                                ),
+                              )
+                              .toList();
                   if (filtered.isEmpty) {
                     return const Center(child: Text('Không tìm thấy món nào'));
                   }
@@ -97,21 +94,27 @@ class _ProductPageState extends State<ProductPage> {
                     itemCount: filtered.length,
                     itemBuilder: (context, i) {
                       final product = filtered[i];
-                      final priceText       = moneyFmt.format(product.price);
-                      final discountedText  = moneyFmt.format(product.discountedPrice);
+                      final priceText = moneyFmt.format(product.price);
+                      final discountedText = moneyFmt.format(
+                        product.discountedPrice,
+                      );
 
                       return GestureDetector(
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => DetailProductPage(product : product),
+                              builder:
+                                  (_) => DetailProductPage(product: product),
                             ),
                           );
                         },
                         child: Container(
-                          margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4), // thay Padding + margin
-                          padding: const EdgeInsets.all(6),                              // padding chung
+                          margin: const EdgeInsets.symmetric(
+                            vertical: 6,
+                            horizontal: 4,
+                          ), // thay Padding + margin
+                          padding: const EdgeInsets.all(6), // padding chung
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
@@ -127,7 +130,11 @@ class _ProductPageState extends State<ProductPage> {
                                   width: 100,
                                   height: 100,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, size: 100),
+                                  errorBuilder:
+                                      (_, __, ___) => const Icon(
+                                        Icons.broken_image,
+                                        size: 100,
+                                      ),
                                 ),
                               ),
 
@@ -141,7 +148,10 @@ class _ProductPageState extends State<ProductPage> {
                                   children: [
                                     Text(
                                       product.name,
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -149,15 +159,21 @@ class _ProductPageState extends State<ProductPage> {
                                     Row(
                                       children: [
                                         Text(
-                                          moneyFmt.format(product.discountedPrice),
-                                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                                          moneyFmt.format(
+                                            product.discountedPrice,
+                                          ),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 14,
+                                          ),
                                         ),
                                         const SizedBox(width: 6),
                                         if (product.discountPercentage > 0)
                                           Text(
                                             moneyFmt.format(product.price),
                                             style: const TextStyle(
-                                              decoration: TextDecoration.lineThrough,
+                                              decoration:
+                                                  TextDecoration.lineThrough,
                                               fontSize: 12,
                                               color: Colors.grey,
                                             ),
@@ -170,19 +186,20 @@ class _ProductPageState extends State<ProductPage> {
 
                               // Icon Cart
                               IconButton(
-                                onPressed: () async{
+                                onPressed: () async {
                                   final loggedIn = auth.isLoggedIn;
                                   final id = auth.accountId.value;
-                                  if(loggedIn){
+                                  if (loggedIn) {
                                     print("Đã đăng nhập");
-                                    await cartService.addProductToCart(id, product.id, 1);
-
-                                  }
-                                  else{
+                                    await cartService.addProductToCart(
+                                      id,
+                                      product.id,
+                                      1,
+                                    );
+                                  } else {
                                     // Chưa login, chuyển đến trang auth
                                     await Get.to(() => PageAuthUser());
                                   }
-
                                 },
                                 icon: const Icon(Icons.shopping_cart, size: 19),
                                 splashRadius: 20,
@@ -190,11 +207,9 @@ class _ProductPageState extends State<ProductPage> {
                             ],
                           ),
                         ),
-
                       );
                     },
                   );
-
                 },
               ),
             ),
