@@ -58,6 +58,13 @@ class Product {
 class ProductSnapshot {
   static final supabase = Supabase.instance.client;
 
+  static Future<Map<int, Product>> getProduct() async{
+    return getMapData(
+      table: "product",
+      fromJson: (json) => Product.fromMap(json),
+      getID: (t) => t.id!,
+    );
+  }
   /// Cập nhật sản phẩm
   static Future<void> update(Product newProduct) async {
     if (newProduct.id == null) {

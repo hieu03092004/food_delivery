@@ -56,8 +56,8 @@ class OrderListTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<Order>>(
-      stream: OrderSnapshot.getOrderStream(),
+    return FutureBuilder<Map<int, Order>>(
+      future: OrderSnapshot.getOrder(),
       builder: (context, snapshot) {
         return AsyncWidget(
           snapshot: snapshot,

@@ -17,7 +17,7 @@ class PageAddProduct extends StatefulWidget {
 }
 
 class _PageAddProductState extends State<PageAddProduct> {
-  TextEditingController txtId = TextEditingController();
+  // TextEditingController txtId = TextEditingController();
   TextEditingController txtTen = TextEditingController();
   TextEditingController txtGia = TextEditingController();
   TextEditingController txtMoTa = TextEditingController();
@@ -97,7 +97,7 @@ class _PageAddProductState extends State<PageAddProduct> {
                         });
                     }
                   },
-                  child: const Text("Chọn ảnh"),
+                  child: Text("Chọn ảnh"),
                 ),
               ],
             ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:food_delivery/pages/admin_pages/menu_page.dart';
-import 'package:food_delivery/pages/admin_pages/notification_page.dart';
 import 'package:food_delivery/pages/admin_pages/order/order_page.dart';
 import 'package:food_delivery/pages/admin_pages/product/product_page.dart';
 
@@ -26,7 +25,6 @@ class _BottomNavAdminState extends State<BottomNavAdmin> {
       // ProductPage(storeId: widget.storeId),
       ProductPage(storeId: widget.storeId),
       OrdersPage(storeId: widget.storeId),
-      NotificationsPage(),
       MenuPage(storeId: widget.storeId),
     ];
   }
@@ -49,10 +47,6 @@ class _BottomNavAdminState extends State<BottomNavAdmin> {
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_bag),
             label: 'Đơn hàng',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: 'Thông báo',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),

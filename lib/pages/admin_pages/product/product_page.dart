@@ -7,30 +7,62 @@ import 'package:food_delivery/pages/admin_pages/product/product_update_page.dart
 import '../../../model/admin_model/product_model.dart';
 import '../../dialog/dialogs.dart';
 
-class ProductPage extends StatelessWidget {
+
+class ProductPage extends StatefulWidget {
   ProductPage({super.key, required this.storeId});
   final int storeId;
   late BuildContext myContext;
 
-  /// Tính giá sau khi áp dụng giảm giá
+  @override
+  State<ProductPage> createState() => _ProductPageState();
+}
+
+class _ProductPageState extends State<ProductPage> {
+  late Future<Map<int, Product>> _future;
+  Map<int, Product> _products = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+
+    ProductSnapshot.listenDataChange(_products, updateUI: () {
+      _loadData();
+    });
+  }
+
+  void _loadData() {
+    _future = ProductSnapshot.getProduct().then((data) {
+      _products = data;
+      return data;
+    });
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    ProductSnapshot.unsubscribeListenProductChange();
+    super.dispose();
+  }
+
+  /// Tính giá sau giảm
   String _getDiscountedPrice(double price, double discountPercent) {
     final discounted = price * (1 - discountPercent / 100);
     return discounted.toStringAsFixed(0);
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title:
-        Text("Sản phẩm theo danh mục")
-      ),
-      body: StreamBuilder<List<Product>>(
-        stream: ProductSnapshot.getProductStream(),
+      appBar: AppBar(title: Text("Sản phẩm theo danh mục")),
+      body: FutureBuilder<Map<int, Product>>(
+        future: _future,
         builder: (context, snapshot) {
           return AsyncWidget(
             snapshot: snapshot,
             builder: (context, snapshot) {
-              final allProducts = snapshot.data!
-                  .where((p) => p.storeId == storeId)
+              final allProducts = snapshot.data!.values
+                  .where((p) => p.storeId == widget.storeId)
                   .toList();
 
               final categories = allProducts
@@ -42,7 +74,6 @@ class ProductPage extends StatelessWidget {
               return ListView.builder(
                 itemCount: categories.length,
                 itemBuilder: (context, index) {
-                  myContext = context;
                   final category = categories[index];
                   final productsInCategory = allProducts
                       .where((p) => p.categoryName == category)
@@ -57,12 +88,13 @@ class ProductPage extends StatelessWidget {
                           extentRatio: 0.6,
                           motion: const ScrollMotion(),
                           children: [
-                            SlidableAction  (
+                            SlidableAction(
                               onPressed: (context) {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => PageUpdateProduct(product: product),
+                                    builder: (context) =>
+                                        PageUpdateProduct(product: product),
                                   ),
                                 );
                               },
@@ -74,16 +106,16 @@ class ProductPage extends StatelessWidget {
                             SlidableAction(
                               onPressed: (context) async {
                                 final confirm = await showConfirmDialog(
-                                    myContext,
-                                    "Bạn có muốn xoá sản phẩm '${product.name}' không?"
+                                  context,
+                                  "Bạn có muốn xoá sản phẩm '${product.name}' không?",
                                 );
-
                                 if (confirm == 'ok') {
                                   await ProductSnapshot.delete(product.id!);
-                                  ScaffoldMessenger.of(myContext).showSnackBar(
+                                  ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text("Đã xoá sản phẩm '${product.name}'"),
-                                      duration: const Duration(seconds: 2),
+                                      content: Text(
+                                          "Đã xoá sản phẩm '${product.name}'"),
+                                      duration: Duration(seconds: 2),
                                     ),
                                   );
                                 }
@@ -98,7 +130,9 @@ class ProductPage extends StatelessWidget {
                         child: Opacity(
                           opacity: product.isDeleted ? 0.5 : 1.0,
                           child: Container(
-                            color: product.isDeleted ? Colors.grey.shade100 : null,
+                            color: product.isDeleted
+                                ? Colors.grey.shade100
+                                : null,
                             child: ListTile(
                               leading: product.thumbnailUrl.isNotEmpty
                                   ? Image.network(
@@ -121,7 +155,9 @@ class ProductPage extends StatelessWidget {
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  color: product.isDeleted ? Colors.grey : null,
+                                  color: product.isDeleted
+                                      ? Colors.grey
+                                      : null,
                                 ),
                               )
                                   : null,
@@ -148,7 +184,8 @@ class ProductPage extends StatelessWidget {
                                     ),
                                     Text(
                                       '-${product.discountPercent.toStringAsFixed(0)}%',
-                                      style: TextStyle(color: Colors.red, fontSize: 12),
+                                      style:
+                                      TextStyle(color: Colors.red, fontSize: 12),
                                     ),
                                   ] else
                                     Text(
@@ -164,7 +201,8 @@ class ProductPage extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => PageProductDetail(product: product),
+                                    builder: (context) =>
+                                        PageProductDetail(product: product),
                                   ),
                                 );
                               },
@@ -185,7 +223,7 @@ class ProductPage extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => PageAddProduct(storeId: storeId),
+              builder: (context) => PageAddProduct(storeId: widget.storeId),
             ),
           );
         },
@@ -194,3 +232,4 @@ class ProductPage extends StatelessWidget {
     );
   }
 }
+
