@@ -11,7 +11,7 @@ import '../../dialog/dialogs.dart';
 class ProductPage extends StatefulWidget {
   ProductPage({super.key, required this.storeId});
   final int storeId;
-  late BuildContext myContext;
+
 
   @override
   State<ProductPage> createState() => _ProductPageState();
@@ -20,7 +20,7 @@ class ProductPage extends StatefulWidget {
 class _ProductPageState extends State<ProductPage> {
   late Future<Map<int, Product>> _future;
   Map<int, Product> _products = {};
-
+  late BuildContext myContext;
   @override
   void initState() {
     super.initState();
@@ -53,6 +53,7 @@ class _ProductPageState extends State<ProductPage> {
 
   @override
   Widget build(BuildContext context) {
+    myContext = context;
     return Scaffold(
       appBar: AppBar(title: Text("Sản phẩm theo danh mục")),
       body: FutureBuilder<Map<int, Product>>(
@@ -106,18 +107,32 @@ class _ProductPageState extends State<ProductPage> {
                             SlidableAction(
                               onPressed: (context) async {
                                 final confirm = await showConfirmDialog(
-                                  context,
+                                  myContext,
                                   "Bạn có muốn xoá sản phẩm '${product.name}' không?",
                                 );
                                 if (confirm == 'ok') {
-                                  await ProductSnapshot.delete(product.id!);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                          "Đã xoá sản phẩm '${product.name}'"),
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
+                                  try {
+                                    if (product.id != null) {
+                                      await ProductSnapshot.delete(product.id!);
+                                      _loadData(); // Cập nhật danh sách
+                                      ScaffoldMessenger.of(myContext).clearSnackBars();
+                                      ScaffoldMessenger.of(myContext).showSnackBar(
+                                        SnackBar(
+                                          content: Text("Đã xoá sản phẩm '${product.name}'"),
+                                          duration: Duration(seconds: 3),
+                                        ),
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text("Lỗi: ID sản phẩm bị null")),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    print("Lỗi khi xoá: $e");
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text("Không thể xoá sản phẩm.")),
+                                    );
+                                  }
                                 }
                               },
                               backgroundColor: Colors.red,
@@ -125,6 +140,7 @@ class _ProductPageState extends State<ProductPage> {
                               icon: Icons.delete_forever,
                               label: 'Xoá',
                             ),
+
                           ],
                         ),
                         child: Opacity(
