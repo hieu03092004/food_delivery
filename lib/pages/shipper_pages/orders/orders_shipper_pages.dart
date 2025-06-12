@@ -191,7 +191,34 @@ class _OrderCard extends StatelessWidget {
                     onPressed:
                         () => onConfirm(
                           context,
-                          'Bạn có muốn thay đổi trạng thái đơn hàng thành "Giao thất bại"?',
+                          'Bạn có muốn thay đổi trạng thái đơn hàng sang trạng thái tiếp theo?',
+                          () => _controller.processNextStatus(order),
+                        ),
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        side: const BorderSide(color: Color(0xFFEF2B39)),
+                      ),
+                    ),
+                    child: const Text(
+                      'Thay đổi',
+                      style: TextStyle(color: Color(0xFFEF2B39), fontSize: 12),
+                    ),
+                  ),
+                const SizedBox(width: 8),
+                if (order.status != 'delivered' &&
+                    order.status != 'delivered_failed' &&
+                    order.status != 'canceled')
+                  TextButton(
+                    onPressed:
+                        () => onConfirm(
+                          context,
+                          'Bạn có muốn xác nhận đơn hàng này được giao thất bại?',
                           () => _controller.processDeliveredFailed(order),
                         ),
                     style: TextButton.styleFrom(
@@ -214,17 +241,9 @@ class _OrderCard extends StatelessWidget {
                 if (order.status != 'delivered' &&
                     order.status != 'delivered_failed' &&
                     order.status != 'canceled')
-                  InkWell(
-                    onTap:
-                        () => onConfirm(
-                          context,
-                          'Bạn có muốn thay đổi trạng thái đơn hàng sang trạng thái tiếp theo?',
-                          () => _controller.processNextStatus(order),
-                        ),
-                    child: Text(
-                      order.statusText,
-                      style: const TextStyle(color: Color(0xFFEF2B39)),
-                    ),
+                  Text(
+                    order.statusText,
+                    style: const TextStyle(color: Color(0xFFEF2B39)),
                   ),
               ],
             ),

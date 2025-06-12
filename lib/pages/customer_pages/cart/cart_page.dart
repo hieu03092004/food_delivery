@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:food_delivery/model/customer_model/cart_model.dart';
 import 'package:food_delivery/model/customer_model/store_model.dart';
 import 'package:food_delivery/service/auth_servicae/AuthService.dart';
 import 'package:food_delivery/service/customer_service/Cart/cart_service.dart';
 import 'package:food_delivery/widget/default_appBar.dart';
 import 'package:get/get.dart';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -46,9 +44,7 @@ class _CartPageState extends State<CartPage> {
     final auth = Get.find<AuthService>();
     final cartService = Get.find<CartService>();
     return Scaffold(
-      appBar: CommonAppBar(title: 'Giỏ hàng', showCartIcon: false,
-
-      ),
+      appBar: CommonAppBar(title: 'Giỏ hàng', showCartIcon: false),
       backgroundColor: Colors.grey[200],
       body: FutureBuilder<List<CartItem>>(
         future: _futureItems,
@@ -98,7 +94,7 @@ class _CartPageState extends State<CartPage> {
                 _buildStoreSection(
                   storeMap[storeId]!,
                   itemsByStore[storeId]!,
-                      () {
+                  () {
                     // Toggle chọn toàn bộ items của store
                     final newVal = !_storeSelected[storeId]!;
                     setState(() {
@@ -119,7 +115,11 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  Widget _buildStoreSection(Store store, List<CartItem> items, VoidCallback onStoreToggle) {
+  Widget _buildStoreSection(
+    Store store,
+    List<CartItem> items,
+    VoidCallback onStoreToggle,
+  ) {
     final storeChecked = _storeSelected[store.id]!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,7 +131,11 @@ class _CartPageState extends State<CartPage> {
           child: Row(
             children: [
               Checkbox(value: storeChecked, onChanged: (_) => onStoreToggle()),
-          Text(store.name, style: const TextStyle(fontWeight: FontWeight.w600))],
+              Text(
+                store.name,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ],
           ),
         ),
         const Divider(height: 1),
@@ -148,7 +152,12 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  Widget _buildCartItemRow(String itemKey, bool isChecked, int qty, CartItem item) {
+  Widget _buildCartItemRow(
+    String itemKey,
+    bool isChecked,
+    int qty,
+    CartItem item,
+  ) {
     final prod = item.product;
     return Container(
       color: Colors.white,
@@ -161,7 +170,12 @@ class _CartPageState extends State<CartPage> {
           ),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
-            child: Image.network(prod.thumbnailURL, width: 56, height: 56, fit: BoxFit.cover),
+            child: Image.network(
+              prod.thumbnailURL,
+              width: 56,
+              height: 56,
+              fit: BoxFit.cover,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -174,19 +188,23 @@ class _CartPageState extends State<CartPage> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.remove_circle_outline),
-                      onPressed: qty > 1 ? () => setState(() => _quantities[itemKey] = qty - 1) : null,
+                      onPressed:
+                          qty > 1
+                              ? () =>
+                                  setState(() => _quantities[itemKey] = qty - 1)
+                              : null,
                     ),
                     Text('$qty', style: const TextStyle(fontSize: 16)),
                     IconButton(
                       icon: const Icon(Icons.add_circle_outline),
-                      onPressed: () => setState(() => _quantities[itemKey] = qty + 1),
+                      onPressed:
+                          () => setState(() => _quantities[itemKey] = qty + 1),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-
 
           Column(
             children: [
@@ -197,7 +215,7 @@ class _CartPageState extends State<CartPage> {
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: Colors.deepOrange
+                    color: Colors.deepOrange,
                   ),
                 ),
 
@@ -220,15 +238,12 @@ class _CartPageState extends State<CartPage> {
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                      color: Colors.deepOrange
-
+                    color: Colors.deepOrange,
                   ),
                 ),
               ],
             ],
-          )
-
-
+          ),
         ],
       ),
     );
@@ -236,7 +251,8 @@ class _CartPageState extends State<CartPage> {
 
   Widget _buildBottomBar() {
     // Kiểm tra xem tất cả các sản phẩm có được chọn không
-    final allChecked = _itemSelected.isNotEmpty && _itemSelected.values.every((v) => v);
+    final allChecked =
+        _itemSelected.isNotEmpty && _itemSelected.values.every((v) => v);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -244,17 +260,17 @@ class _CartPageState extends State<CartPage> {
       child: Row(
         children: [
           Checkbox(
-              value: allChecked,
-              onChanged: (v) {
-                final newVal = v!;
-                setState(() {
-                  _allSelected = newVal;
-                  // Cập nhật tất cả các items
-                  _itemSelected.updateAll((key, _) => newVal);
-                  // Cập nhật tất cả các store
-                  _storeSelected.updateAll((key, _) => newVal);
-                });
-              }
+            value: allChecked,
+            onChanged: (v) {
+              final newVal = v!;
+              setState(() {
+                _allSelected = newVal;
+                // Cập nhật tất cả các items
+                _itemSelected.updateAll((key, _) => newVal);
+                // Cập nhật tất cả các store
+                _storeSelected.updateAll((key, _) => newVal);
+              });
+            },
           ),
           const Text('Tất cả'),
           const Spacer(),
@@ -267,7 +283,10 @@ class _CartPageState extends State<CartPage> {
               final items = snapshot.data!;
 
               for (var item in items) {
-                final itemKey = _getItemKey(item.product.store.id, item.product.id);
+                final itemKey = _getItemKey(
+                  item.product.store.id,
+                  item.product.id,
+                );
                 if (_itemSelected[itemKey] == true) {
                   final qty = _quantities[itemKey] ?? item.quantity;
                   total += item.product.discountedPrice * qty;
@@ -278,17 +297,17 @@ class _CartPageState extends State<CartPage> {
                 'Tổng cộng ${NumberFormat.currency(locale: 'vi_VN', symbol: '', decimalDigits: 0).format(total)} đ',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Colors.deepOrange
+                  color: Colors.deepOrange,
                 ),
               );
             },
           ),
           const SizedBox(width: 12),
           ElevatedButton(
-              onPressed: () {
-                // Xử lý khi nhấn nút Mua hàng
-              },
-              child: const Text('Mua ngay')
+            onPressed: () {
+              // Xử lý khi nhấn nút Mua hàng
+            },
+            child: const Text('Mua ngay'),
           ),
         ],
       ),

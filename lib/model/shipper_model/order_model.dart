@@ -1,4 +1,3 @@
-
 import '../../config/database.dart';
 
 class Order {
@@ -188,6 +187,51 @@ class OrderSnapshot {
       return true;
     } catch (e) {
       print('Error updating order status: $e');
+      return false;
+    }
+  }
+
+  static Future<String?> getCustomerDeviceToken(int customerId) async {
+    try {
+      final tokenRes =
+          await Database.client
+              .from('account')
+              .select('tokendevice')
+              .eq('account_id', customerId)
+              .single();
+
+      final String? deviceToken = tokenRes['tokendevice'] as String?;
+
+      if (deviceToken == null) {
+        print('⚠️ User $customerId chưa có deviceToken');
+      } else {
+        print('👉 Device token: $deviceToken');
+      }
+
+      return deviceToken;
+    } catch (e) {
+      print('❌ Lỗi khi lấy device token: $e');
+      return null;
+    }
+  }
+
+  static Future<bool> createNotification({
+    required int recipientId,
+    required int orderId,
+    required String message,
+    required String title,
+  }) async {
+    try {
+      await Database.client.from('notification').insert({
+        'recipient_id': recipientId,
+        'order_id': orderId,
+        'message': message,
+        'title': title,
+      });
+
+      return true;
+    } catch (e) {
+      print('❌ Lỗi khi tạo notification: $e');
       return false;
     }
   }

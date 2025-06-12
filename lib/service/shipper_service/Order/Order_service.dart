@@ -1,14 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:get/get.dart';
 
 import '../../../model/shipper_model/order_model.dart';
 import '../../../service/auth_servicae/AuthService.dart';
 
 class OrderService extends GetxController {
-  final SupabaseClient _supabaseClient = Supabase.instance.client;
   final Map<String, List<OrderWithItems>> _ordersByStatus = {};
   final RxBool isLoading = false.obs;
   final List<String> tabs = [
@@ -26,7 +24,6 @@ class OrderService extends GetxController {
     'Đã huỷ': 'canceled',
   };
 
-  // Map ngược lại từ giá trị database sang UI
   final Map<String, String> _dbToUiStatusMap = {
     'order_received': 'Đã nhận đơn',
     'in_transit': 'Đang vận chuyển',
@@ -43,14 +40,12 @@ class OrderService extends GetxController {
   void onInit() {
     super.onInit();
     debugPrint('🚀 Initializing OrderService');
-    // Load initial data for all tabs
     for (var status in tabs) {
       debugPrint('📥 Loading initial data for status: $status');
       loadOrdersFor(status);
     }
   }
 
-  // Getter methods
   List<OrderWithItems> getOrdersByStatus(String status) {
     debugPrint('🔍 Getting orders for status: $status');
     debugPrint(
@@ -66,7 +61,6 @@ class OrderService extends GetxController {
   Map<String, String> get dbToUiStatusMap => _dbToUiStatusMap;
   Map<String, String> get nextStatusMap => _nextStatusMap;
 
-  // Load orders for a specific status
   Future<void> loadOrdersFor(String uiStatus) async {
     debugPrint('🔄 Loading orders for UI status: $uiStatus');
     isLoading.value = true;
@@ -80,7 +74,13 @@ class OrderService extends GetxController {
       }
 
       debugPrint('👤 User ID: $userId');
-      final list = await getOrdersByUiStatus(uiStatus, userId);
+      final dbStatus = _uiToDbStatusMap[uiStatus];
+      if (dbStatus == null) {
+        debugPrint('⚠️ Invalid UI status: $uiStatus');
+        return;
+      }
+
+      final list = await OrderSnapshot.getOrdersByStatus(dbStatus, userId);
       debugPrint('📦 Received ${list.length} orders for status: $uiStatus');
 
       if (list.isNotEmpty) {
@@ -102,12 +102,10 @@ class OrderService extends GetxController {
     }
   }
 
-  // Process next status
   Future<bool> processNextStatus(OrderWithItems order) async {
     try {
       final result = await processOrderStatusUpdate(order);
       if (result.success && result.newStatus != null) {
-        // Reload orders for both old and new status
         final oldStatus = _dbToUiStatusMap[order.status];
         if (oldStatus != null) {
           await loadOrdersFor(oldStatus);
@@ -122,12 +120,10 @@ class OrderService extends GetxController {
     }
   }
 
-  // Process delivered failed
   Future<bool> processDeliveredFailed(OrderWithItems order) async {
     try {
       final result = await processOrderDeliveredFailed(order);
       if (result.success && result.newStatus != null) {
-        // Reload orders for both old and new status
         final oldStatus = _dbToUiStatusMap[order.status];
         if (oldStatus != null) {
           await loadOrdersFor(oldStatus);
@@ -142,178 +138,129 @@ class OrderService extends GetxController {
     }
   }
 
-  Future<List<OrderWithItems>> getOrdersByUiStatus(
-    String uiStatus,
-    int UserId,
+  Future<UpdateOrderResult> processOrderStatusUpdate(
+    OrderWithItems order,
   ) async {
-    debugPrint('🔄 Converting UI status to DB status');
-    // Chuyển đổi từ nhãn UI tiếng Việt sang giá trị tiếng Anh trong DB
-    final dbStatus = _uiToDbStatusMap[uiStatus];
+    final currentDb = order.status;
+    final nextDb = _nextStatusMap[currentDb];
 
-    if (dbStatus == null) {
-      debugPrint('⚠️ Invalid UI status: $uiStatus');
-      return [];
-    }
-
-    debugPrint('✅ UI status: $uiStatus -> DB status: $dbStatus');
-    return await getOrdersByDbStatus(dbStatus, UserId);
-  }
-
-  // Lấy đơn hàng theo trạng thái
-  Future<List<OrderWithItems>> getOrdersByDbStatus(
-    String dbStatus,
-    int userID,
-  ) async {
-    debugPrint("🔍 Fetching orders with status: $dbStatus for userId: $userID");
-    try {
-      final raw = await _supabaseClient.rpc(
-        'get_orders_by_status',
-        params: {'order_status': dbStatus, 'p_shipper_id': userID},
+    if (nextDb == null) {
+      return UpdateOrderResult(
+        success: false,
+        message: 'Không có trạng thái tiếp theo',
       );
-      debugPrint('📦 Raw RPC result: $raw');
-
-      if (raw is! List) {
-        debugPrint('⚠️ Unexpected RPC result, not a List: $raw');
-        return [];
-      }
-
-      if (raw.isEmpty) {
-        debugPrint('ℹ️ No orders found for status: $dbStatus');
-        return [];
-      }
-
-      // 1) Parse List<dynamic> -> List<Order>
-      final flatOrders =
-          (raw as List<dynamic>).map((json) {
-            debugPrint('📝 Parsing order: $json');
-            final o = Order.fromJson(json as Map<String, dynamic>);
-            o.statusText = _dbToUiStatusMap[o.status] ?? o.status;
-            o.totalAmount = o.discountedPrice * o.quantity + o.shippingFee;
-            return o;
-          }).toList();
-
-      debugPrint('📦 Parsed ${flatOrders.length} flat orders');
-
-      // 2) Nhóm theo order.id
-      final Map<int, List<Order>> buffer = {};
-      for (var o in flatOrders) {
-        buffer.putIfAbsent(o.id, () => []).add(o);
-      }
-
-      debugPrint('📦 Grouped into ${buffer.length} orders');
-
-      // 3) Build List<OrderWithItems> từ map
-      final grouped =
-          buffer.entries.map((e) {
-            final items = e.value;
-            final first = items.first;
-            return OrderWithItems(
-              id: first.id,
-              customerId: first.customerId,
-              customerName: first.customerName,
-              storeName: first.storeName,
-              status: first.status,
-              statusText: first.statusText,
-              shippingFee: first.shippingFee,
-              orderDate: first.orderDate,
-              items: items,
-            );
-          }).toList();
-
-      debugPrint('📦 Final grouped orders: ${grouped.length}');
-      return grouped;
-    } catch (e) {
-      debugPrint('❌ Error fetching orders by status: $e');
-      return [];
     }
-  }
 
-  // Cập nhật trạng thái đơn hàng tiếp theo
-  Future<bool> updateOrderStatusToNext(OrderWithItems order) async {
+    final oldUi = _dbToUiStatusMap[currentDb]!;
+    final newUi = _dbToUiStatusMap[nextDb]!;
+
     try {
-      final currentDb = order.status;
-      final nextDb = _nextStatusMap[currentDb];
-
-      if (nextDb == null) {
-        print('⚠️ Không có trạng thái tiếp theo cho: $currentDb');
-        return false;
+      final updateSuccess = await OrderSnapshot.updateOrderStatus(
+        order.id,
+        nextDb,
+      );
+      if (!updateSuccess) {
+        return UpdateOrderResult(
+          success: false,
+          message: 'Lỗi khi cập nhật trạng thái đơn hàng',
+        );
       }
 
-      await _supabaseClient
-          .from('orders')
-          .update({'status': nextDb})
-          .eq('order_id', order.id);
+      String content = '';
+      String titleNotifications = '';
 
-      return true;
-    } catch (e) {
-      print('❌ Lỗi khi cập nhật trạng thái đơn hàng: $e');
-      return false;
-    }
-  }
-
-  // Cập nhật trạng thái đơn hàng thành "Giao thất bại"
-  Future<bool> updateOrderStatusToDeliveredFailed(int orderId) async {
-    try {
-      await _supabaseClient
-          .from('orders')
-          .update({'status': 'delivered_failed'})
-          .eq('order_id', orderId);
-
-      return true;
-    } catch (e) {
-      print('❌ Lỗi khi cập nhật trạng thái thành giao thất bại: $e');
-      return false;
-    }
-  }
-
-  // Lấy device token của khách hàng
-  Future<String?> getCustomerDeviceToken(int customerId) async {
-    try {
-      final tokenRes =
-          await _supabaseClient
-              .from('account')
-              .select('tokendevice')
-              .eq('account_id', customerId)
-              .single();
-
-      final String? deviceToken = tokenRes['tokendevice'] as String?;
-
-      if (deviceToken == null) {
-        print('⚠️ User $customerId chưa có deviceToken');
+      if (newUi == 'Đã giao') {
+        content = 'Đơn hàng ${order.id} của bạn đã được giao thành công';
+        titleNotifications = 'Giao kiện hàng thành công';
       } else {
-        print('👉 Device token: $deviceToken');
+        content =
+            'Đơn hàng ${order.id} của bạn đang trong quá trình vận chuyển';
+        titleNotifications = 'Đang vận chuyển';
       }
 
-      return deviceToken;
+      final deviceToken = await OrderSnapshot.getCustomerDeviceToken(
+        order.customerId,
+      );
+
+      await OrderSnapshot.createNotification(
+        recipientId: order.customerId,
+        orderId: order.id,
+        message: content,
+        title: titleNotifications,
+      );
+
+      await sendFCMNotification(
+        deviceToken: deviceToken,
+        title: 'Cập nhật đơn hàng',
+        body: content,
+      );
+
+      return UpdateOrderResult(
+        success: true,
+        message: 'Cập nhật thành công',
+        oldStatus: oldUi,
+        newStatus: newUi,
+        newDbStatus: nextDb,
+      );
     } catch (e) {
-      print('❌ Lỗi khi lấy device token: $e');
-      return null;
+      print('❌ Lỗi khi xử lý cập nhật trạng thái: $e');
+      return UpdateOrderResult(success: false, message: 'Lỗi: $e');
     }
   }
 
-  // Tạo notification trong database
-  Future<bool> createNotification({
-    required int recipientId,
-    required int orderId,
-    required String message,
-    required String title,
-  }) async {
+  Future<UpdateOrderResult> processOrderDeliveredFailed(
+    OrderWithItems order,
+  ) async {
+    const String nextDb = 'delivered_failed';
+    const String newUi = 'Giao thất bại';
+    final String oldDb = order.status;
+    final String oldUi = _dbToUiStatusMap[oldDb]!;
+
     try {
-      await _supabaseClient.from('notification').insert({
-        'recipient_id': recipientId,
-        'order_id': orderId,
-        'message': message,
-        'title': title,
-      });
+      final updateSuccess = await OrderSnapshot.updateOrderStatus(
+        order.id,
+        nextDb,
+      );
+      if (!updateSuccess) {
+        return UpdateOrderResult(
+          success: false,
+          message: 'Lỗi khi cập nhật trạng thái đơn hàng',
+        );
+      }
 
-      return true;
+      final String content = 'Đơn hàng ${order.id} của bạn đã giao thất bại';
+      const String notificationTitle = 'Giao thất bại';
+
+      final deviceToken = await OrderSnapshot.getCustomerDeviceToken(
+        order.customerId,
+      );
+
+      await OrderSnapshot.createNotification(
+        recipientId: order.customerId,
+        orderId: order.id,
+        message: content,
+        title: notificationTitle,
+      );
+
+      await sendFCMNotification(
+        deviceToken: deviceToken,
+        title: 'Cập nhật đơn hàng',
+        body: content,
+      );
+
+      return UpdateOrderResult(
+        success: true,
+        message: 'Cập nhật thành công',
+        oldStatus: oldUi,
+        newStatus: newUi,
+        newDbStatus: nextDb,
+      );
     } catch (e) {
-      print('❌ Lỗi khi tạo notification: $e');
-      return false;
+      print('❌ Lỗi khi xử lý giao thất bại: $e');
+      return UpdateOrderResult(success: false, message: 'Lỗi: $e');
     }
   }
 
-  // Gửi FCM notification
   Future<bool> sendFCMNotification({
     required String? deviceToken,
     required String title,
@@ -351,131 +298,6 @@ class OrderService extends GetxController {
     } catch (httpError) {
       print('❌ Lỗi kết nối khi gửi FCM: $httpError');
       return false;
-    }
-  }
-
-  // Xử lý cập nhật trạng thái và gửi thông báo (cho trạng thái tiếp theo)
-  Future<UpdateOrderResult> processOrderStatusUpdate(
-    OrderWithItems order,
-  ) async {
-    final currentDb = order.status;
-    final nextDb = _nextStatusMap[currentDb];
-
-    if (nextDb == null) {
-      return UpdateOrderResult(
-        success: false,
-        message: 'Không có trạng thái tiếp theo',
-      );
-    }
-
-    final oldUi = _dbToUiStatusMap[currentDb]!;
-    final newUi = _dbToUiStatusMap[nextDb]!;
-
-    try {
-      // 1. Cập nhật status trong database
-      final updateSuccess = await updateOrderStatusToNext(order);
-      if (!updateSuccess) {
-        return UpdateOrderResult(
-          success: false,
-          message: 'Lỗi khi cập nhật trạng thái đơn hàng',
-        );
-      }
-
-      // 2. Tạo nội dung thông báo
-      String content = '';
-      String titleNotifications = '';
-
-      if (newUi == 'Đã giao') {
-        content = 'Đơn hàng ${order.id} của bạn đã được giao thành công';
-        titleNotifications = 'Giao kiện hàng thành công';
-      } else {
-        content =
-            'Đơn hàng ${order.id} của bạn đang trong quá trình vận chuyển';
-        titleNotifications = 'Đang vận chuyển';
-      }
-
-      // 3. Lấy device token
-      final deviceToken = await getCustomerDeviceToken(order.customerId);
-
-      // 4. Tạo notification trong database
-      await createNotification(
-        recipientId: order.customerId,
-        orderId: order.id,
-        message: content,
-        title: titleNotifications,
-      );
-
-      // 5. Gửi FCM
-      await sendFCMNotification(
-        deviceToken: deviceToken,
-        title: 'Cập nhật đơn hàng',
-        body: content,
-      );
-
-      return UpdateOrderResult(
-        success: true,
-        message: 'Cập nhật thành công',
-        oldStatus: oldUi,
-        newStatus: newUi,
-        newDbStatus: nextDb,
-      );
-    } catch (e) {
-      print('❌ Lỗi khi xử lý cập nhật trạng thái: $e');
-      return UpdateOrderResult(success: false, message: 'Lỗi: $e');
-    }
-  }
-
-  // Xử lý cập nhật trạng thái thành "Giao thất bại"
-  Future<UpdateOrderResult> processOrderDeliveredFailed(
-    OrderWithItems order,
-  ) async {
-    const String nextDb = 'delivered_failed';
-    const String newUi = 'Giao thất bại';
-    final String oldDb = order.status;
-    final String oldUi = _dbToUiStatusMap[oldDb]!;
-
-    try {
-      // 1. Cập nhật status trong database
-      final updateSuccess = await updateOrderStatusToDeliveredFailed(order.id);
-      if (!updateSuccess) {
-        return UpdateOrderResult(
-          success: false,
-          message: 'Lỗi khi cập nhật trạng thái đơn hàng',
-        );
-      }
-
-      // 2. Tạo nội dung thông báo
-      final String content = 'Đơn hàng ${order.id} của bạn đã giao thất bại';
-      const String notificationTitle = 'Giao thất bại';
-
-      // 3. Lấy device token
-      final deviceToken = await getCustomerDeviceToken(order.customerId);
-
-      // 4. Tạo notification trong database
-      await createNotification(
-        recipientId: order.customerId,
-        orderId: order.id,
-        message: content,
-        title: notificationTitle,
-      );
-
-      // 5. Gửi FCM
-      await sendFCMNotification(
-        deviceToken: deviceToken,
-        title: 'Cập nhật đơn hàng',
-        body: content,
-      );
-
-      return UpdateOrderResult(
-        success: true,
-        message: 'Cập nhật thành công',
-        oldStatus: oldUi,
-        newStatus: newUi,
-        newDbStatus: nextDb,
-      );
-    } catch (e) {
-      print('❌ Lỗi khi xử lý giao thất bại: $e');
-      return UpdateOrderResult(success: false, message: 'Lỗi: $e');
     }
   }
 }

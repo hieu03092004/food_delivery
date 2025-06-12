@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:food_delivery/model/customer_model/product_model.dart';
 
 import 'package:flutter/material.dart';
