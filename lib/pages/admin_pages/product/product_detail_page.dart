@@ -5,6 +5,12 @@ class PageProductDetail extends StatelessWidget {
   PageProductDetail({super.key, required this.product});
   final Product product;
 
+  /// Hàm tính giá sau khi giảm
+  String _getDiscountedPrice(double price, double discountPercent) {
+    final discounted = price * (1 - discountPercent / 100);
+    return discounted.toStringAsFixed(0);
+  }
+
   @override
   Widget build(BuildContext context) {
     final discountedPrice = _getDiscountedPrice(product.price, product.discountPercent);
@@ -94,9 +100,4 @@ class PageProductDetail extends StatelessWidget {
     );
   }
 
-  /// Hàm tính giá sau khi giảm
-  String _getDiscountedPrice(double price, double discountPercent) {
-    final discounted = price * (1 - discountPercent / 100);
-    return discounted.toStringAsFixed(0);
-  }
 }
