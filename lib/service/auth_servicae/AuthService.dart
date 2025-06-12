@@ -9,7 +9,6 @@ import 'package:food_delivery/service/customer_service/controller_order.dart';
 import 'package:get/get.dart';
 import 'package:supabase_auth_ui/supabase_auth_ui.dart';
 
-import '../../model/shipper_model/Notification_model.dart';
 class AuthService extends GetxController {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -34,18 +33,19 @@ class AuthService extends GetxController {
       }
     });
   }
-  /// Lấy address của user từ bảng profiles
 
+  /// Lấy address của user từ bảng profiles
 
   Future<void> handleSignIn(String userUUID) async {
     print('🔥 HandleSignIn started with UUID: $userUUID');
 
     try {
-      final resp = await _supabase
-          .from('account')
-          .select('account_id, role_name, store_id')
-          .eq('user_id', userUUID)
-          .single();
+      final resp =
+          await _supabase
+              .from('account')
+              .select('account_id, role_name, store_id')
+              .eq('user_id', userUUID)
+              .single();
 
       final record = resp as Map<String, dynamic>;
       final newAccountId = (record['account_id'] as num).toInt();
@@ -63,14 +63,10 @@ class AuthService extends GetxController {
       print("tr oi co dia chi di: ${address}");
       if (address.isNotEmpty) {
         addressAccount.value = address;
-
       }
       if (newStoreId != null) {
         storeId.value = newStoreId.toInt();
       }
-
-      // XỬ LÝ NOTIFICATION PROVIDER Ở ĐÂY
-      await _setupNotificationProvider(newAccountId);
 
       // Xử lý FCM token
       await _handleFCMToken(newAccountId);
@@ -84,30 +80,17 @@ class AuthService extends GetxController {
 
       update();
       print(' HandleSignIn completed');
-
     } catch (e) {
       print(' Error in handleSignIn: $e');
     }
   }
 
   // Tách riêng việc setup NotificationProvider
-  Future<void> _setupNotificationProvider(int accountId) async {
-    print('🔔 Setting up NotificationProvider for accountId: $accountId');
-
-    // Nếu có instance cũ, xóa đi
-
-    // Tạo instance mới với accountId đúng
-    print('🆕 Creating new NotificationProvider with userId: $accountId');
-
-
-    // Fetch unread count CHỈ MỘT LẦN
-    print('📬 Fetching unread count...');
-  }
 
   Future<void> _handleFCMToken(int accountId) async {
     final fcmToken = await _messaging.getToken();
     if (fcmToken == null) {
-      print('❌ Không lấy được FCM token');
+      print(' Không lấy được FCM token');
       return;
     }
 
@@ -139,13 +122,15 @@ class AuthService extends GetxController {
         break;
     }
   }
+
   Future<String> getAddressForUser(int accountId) async {
     try {
-      final result = await _supabase
-          .from('account')
-          .select('address')
-          .eq('account_id', accountId)
-          .maybeSingle();
+      final result =
+          await _supabase
+              .from('account')
+              .select('address')
+              .eq('account_id', accountId)
+              .maybeSingle();
 
       // trả về empty string nếu null hoặc không phải String
       return (result?['address'] as String?) ?? '';
@@ -155,19 +140,13 @@ class AuthService extends GetxController {
     }
   }
 
-
   Future<void> signOut() async {
     try {
-      print('🚪 Starting sign out process...');
-
       // Gọi Supabase signOut để xóa session
       await _supabase.auth.signOut();
 
       // _handleSignOut sẽ được gọi tự động thông qua onAuthStateChange listener
-      print('✅ Sign out completed');
-
     } catch (e) {
-      print('❌ Error during sign out: $e');
       // Nếu có lỗi với Supabase, vẫn thực hiện cleanup local
       _handleSignOut();
       rethrow; // Ném lại lỗi để UI có thể handle
@@ -176,8 +155,6 @@ class AuthService extends GetxController {
 
   // Cập nhật lại hàm _handleSignOut để hoàn thiện hơn
   void _handleSignOut() {
-    print('👋 Handle sign out - Cleaning up local data');
-
     // Reset values
     accountId.value = 0;
     roleName.value = '';
@@ -185,16 +162,13 @@ class AuthService extends GetxController {
 
     // Xóa NotificationProvider
 
-
     // Clear cart nếu có
     if (Get.isRegistered<ControllerCart>()) {
       try {
         final cartService = Get.find<ControllerCart>();
         cartService.reload();
         update(); // Tạo method này trong CartService nếu chưa có
-      } catch (e) {
-        print('⚠️ Error clearing cart: $e');
-      }
+      } catch (e) {}
     }
     if (Get.isRegistered<ControllerOrder>()) {
       try {
@@ -202,17 +176,15 @@ class AuthService extends GetxController {
         oderList.reloadAll();
         update(); // Tạo method này trong CartService nếu chưa có
       } catch (e) {
-        print('⚠️ Error clearing cart: $e');
+        print(' Error clearing cart: $e');
       }
     }
 
     update();
 
     // Quay về guest home
-    print('🏠 Navigating to guest home');
     Get.offAll(() => BottomCustomerNav());
   }
 
   bool get isLoggedIn => accountId.value != 0;
 }
-
