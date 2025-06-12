@@ -17,9 +17,13 @@ class OrderDetailPage extends StatelessWidget {
   /// Tính tổng tiền của đơn hàng
   double get totalAmount {
     double itemsTotal = order.items.fold(0.0, (sum, item) {
-      final unitPrice = item.product.discountPercent > 0
-          ? _getDiscountedPrice(item.product.price, item.product.discountPercent)
-          : item.product.price;
+      final unitPrice =
+          item.product.discountPercent > 0
+              ? _getDiscountedPrice(
+                item.product.price,
+                item.product.discountPercent,
+              )
+              : item.product.price;
       return sum + unitPrice * item.quantity;
     });
     return itemsTotal + order.shippingFee;
@@ -29,17 +33,16 @@ class OrderDetailPage extends StatelessWidget {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => AssignShipperPage(
-          storeId: storeId,
-          orderId: order.orderId,
-        ),
+        builder:
+            (_) => AssignShipperPage(storeId: storeId, orderId: order.orderId),
       ),
     );
 
     if (result == true && context.mounted) {
-      Navigator.pop(context);
+      Navigator.pop(context, true);
     }
   }
+
   @override
   Widget build(BuildContext context) {
     print('order.status: ${order.status}');
@@ -51,7 +54,7 @@ class OrderDetailPage extends StatelessWidget {
             IconButton(
               icon: Icon(Icons.delivery_dining),
               onPressed: () => _assignShipper(context),
-            )
+            ),
           ],
         ],
       ),
@@ -74,9 +77,13 @@ class OrderDetailPage extends StatelessWidget {
               separatorBuilder: (_, __) => Divider(),
               itemBuilder: (context, index) {
                 final item = order.items[index];
-                final price = item.product.discountPercent > 0
-                    ? _getDiscountedPrice(item.product.price, item.product.discountPercent)
-                    : item.product.price;
+                final price =
+                    item.product.discountPercent > 0
+                        ? _getDiscountedPrice(
+                          item.product.price,
+                          item.product.discountPercent,
+                        )
+                        : item.product.price;
 
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
@@ -96,7 +103,11 @@ class OrderDetailPage extends StatelessWidget {
                   subtitle: Text('Số lượng: ${item.quantity}'),
                   trailing: Text(
                     '${(price * item.quantity).toStringAsFixed(0)} ${item.product.unit}',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 15),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                      fontSize: 15,
+                    ),
                   ),
                 );
               },
@@ -110,8 +121,7 @@ class OrderDetailPage extends StatelessWidget {
                 _buildPriceRow('Tạm tính:', totalAmount - order.shippingFee),
                 _buildPriceRow('Phí vận chuyển:', order.shippingFee.toDouble()),
                 SizedBox(height: 8),
-                _buildPriceRow('Tổng thanh toán:',
-                    totalAmount, isTotal: true),
+                _buildPriceRow('Tổng thanh toán:', totalAmount, isTotal: true),
               ],
             ),
           ),

@@ -77,7 +77,7 @@ class MenuPage extends StatelessWidget {
                 context,
                 icon: Icons.shopping_bag,
                 label: 'Đơn hàng',
-                page: OrdersPage(storeId: storeId, status: 'pending'),
+                page: OrdersPage(storeId: storeId,),
               ),
               _buildNavItem(
                 context,

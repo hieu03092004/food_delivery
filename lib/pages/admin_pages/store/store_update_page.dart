@@ -19,8 +19,6 @@ class _PageUpdateStoreState extends State<PageUpdateStore> {
   final txtAddress = TextEditingController();
   final txtOpenTime = TextEditingController();
   final txtCloseTime = TextEditingController();
-  // final txtLatitude = TextEditingController();
-  // final txtLongitude = TextEditingController();
   final txtCommission = TextEditingController();
 
   Map<String, dynamic>? storeData;
@@ -34,11 +32,12 @@ class _PageUpdateStoreState extends State<PageUpdateStore> {
   }
 
   Future<void> _loadStore() async {
-    final response = await Supabase.instance.client
-        .from('store')
-        .select()
-        .eq('store_id', widget.storeId)
-        .maybeSingle();
+    final response =
+        await Supabase.instance.client
+            .from('store')
+            .select()
+            .eq('store_id', widget.storeId)
+            .maybeSingle();
 
     if (response != null) {
       storeData = response;
@@ -46,8 +45,6 @@ class _PageUpdateStoreState extends State<PageUpdateStore> {
       txtAddress.text = storeData!['address'] ?? '';
       txtOpenTime.text = storeData!['open_time'] ?? '';
       txtCloseTime.text = storeData!['close_time'] ?? '';
-      // txtLatitude.text = storeData!['latitude']?.toString() ?? '';
-      // txtLongitude.text = storeData!['longitude']?.toString() ?? '';
       txtCommission.text = storeData!['shipper_commission']?.toString() ?? '';
     }
 
@@ -64,9 +61,7 @@ class _PageUpdateStoreState extends State<PageUpdateStore> {
     final imageUrl = storeData?['image_url'] ?? '';
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Cập nhật cửa hàng")
-      ),
+      appBar: AppBar(title: Text("Cập nhật cửa hàng")),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -78,20 +73,25 @@ class _PageUpdateStoreState extends State<PageUpdateStore> {
                 border: Border.all(color: Colors.grey),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: _xFile != null
-                  ? Image.file(File(_xFile!.path), fit: BoxFit.cover)
-                  : imageUrl.isNotEmpty
-                  ? Image.network(imageUrl, fit: BoxFit.cover)
-                  : Icon(Icons.image, size: 80, color: Colors.grey),
+              child:
+                  _xFile != null
+                      ? Image.file(File(_xFile!.path), fit: BoxFit.cover)
+                      : imageUrl.isNotEmpty
+                      ? Image.network(imageUrl, fit: BoxFit.cover)
+                      : Icon(Icons.image, size: 80, color: Colors.grey),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 ElevatedButton(
                   onPressed: () async {
-                    final hasPermission = await requestPermission(Permission.photos);
+                    final hasPermission = await requestPermission(
+                      Permission.photos,
+                    );
                     if (hasPermission) {
-                      final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+                      final picked = await ImagePicker().pickImage(
+                        source: ImageSource.gallery,
+                      );
                       if (picked != null) {
                         setState(() {
                           _xFile = picked;
@@ -104,19 +104,46 @@ class _PageUpdateStoreState extends State<PageUpdateStore> {
               ],
             ),
             SizedBox(height: 16),
-            TextFormField(controller: txtName, decoration: InputDecoration(labelText: "Tên cửa hàng", border: OutlineInputBorder())),
+            TextFormField(
+              controller: txtName,
+              decoration: InputDecoration(
+                labelText: "Tên cửa hàng",
+                border: OutlineInputBorder(),
+              ),
+            ),
             SizedBox(height: 16),
-            TextFormField(controller: txtAddress, decoration: InputDecoration(labelText: "Địa chỉ", border: OutlineInputBorder())),
+            TextFormField(
+              controller: txtAddress,
+              decoration: InputDecoration(
+                labelText: "Địa chỉ",
+                border: OutlineInputBorder(),
+              ),
+            ),
             SizedBox(height: 16),
-            TextFormField(controller: txtOpenTime, decoration: InputDecoration(labelText: "Giờ mở cửa", border: OutlineInputBorder())),
+            TextFormField(
+              controller: txtOpenTime,
+              decoration: InputDecoration(
+                labelText: "Giờ mở cửa",
+                border: OutlineInputBorder(),
+              ),
+            ),
             SizedBox(height: 16),
-            TextFormField(controller: txtCloseTime, decoration: InputDecoration(labelText: "Giờ đóng cửa", border: OutlineInputBorder())),
+            TextFormField(
+              controller: txtCloseTime,
+              decoration: InputDecoration(
+                labelText: "Giờ đóng cửa",
+                border: OutlineInputBorder(),
+              ),
+            ),
             SizedBox(height: 16),
-            // TextFormField(controller: txtLatitude, decoration: const InputDecoration(labelText: "Latitude", border: OutlineInputBorder()), keyboardType: TextInputType.number),
-            // const SizedBox(height: 16),
-            // TextFormField(controller: txtLongitude, decoration: const InputDecoration(labelText: "Longitude", border: OutlineInputBorder()), keyboardType: TextInputType.number),
-            // const SizedBox(height: 16),
-            TextFormField(controller: txtCommission, decoration: InputDecoration(labelText: "Hoa hồng shipper", border: OutlineInputBorder()), keyboardType: TextInputType.number),
+            TextFormField(
+              controller: txtCommission,
+              decoration: InputDecoration(
+                labelText: "Hoa hồng shipper",
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+            ),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
@@ -132,24 +159,27 @@ class _PageUpdateStoreState extends State<PageUpdateStore> {
                   );
                 }
 
-                await Supabase.instance.client.from('store').update({
-                  'name': txtName.text,
-                  'address': txtAddress.text,
-                  'open_time': txtOpenTime.text,
-                  'close_time': txtCloseTime.text,
-                  // 'latitude': double.tryParse(txtLatitude.text),
-                  // 'longitude': double.tryParse(txtLongitude.text),
-                  'shipper_commission': double.tryParse(txtCommission.text),
-                  'image_url': finalImageUrl,
-                }).eq('store_id', widget.storeId);
+                await Supabase.instance.client
+                    .from('store')
+                    .update({
+                      'name': txtName.text,
+                      'address': txtAddress.text,
+                      'open_time': txtOpenTime.text,
+                      'close_time': txtCloseTime.text,
+                      // 'latitude': double.tryParse(txtLatitude.text),
+                      // 'longitude': double.tryParse(txtLongitude.text),
+                      'shipper_commission': double.tryParse(txtCommission.text),
+                      'image_url': finalImageUrl,
+                    })
+                    .eq('store_id', widget.storeId);
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Đã cập nhật cửa hàng")),
-                );
-                Navigator.pop(context);
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text("Đã cập nhật cửa hàng")));
+                Navigator.pop(context, true);
               },
               child: Text("Cập nhật"),
-            )
+            ),
           ],
         ),
       ),

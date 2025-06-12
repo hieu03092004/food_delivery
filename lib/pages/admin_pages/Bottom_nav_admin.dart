@@ -23,7 +23,7 @@ class _BottomNavAdminState extends State<BottomNavAdmin> {
     pages = [
       // ProductPage(storeId: widget.storeId),
       ProductPage(storeId: widget.storeId),
-      OrdersPage(storeId: widget.storeId, status: 'pending'),
+      OrdersPage(storeId: widget.storeId),
       MenuPage(storeId: widget.storeId),
     ];
   }

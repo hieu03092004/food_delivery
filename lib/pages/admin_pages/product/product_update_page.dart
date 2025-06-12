@@ -42,6 +42,7 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
     isDeleted = widget.product.isDeleted;
     _fetchCategories();
   }
+
   Future<void> _fetchCategories() async {
     try {
       // Truy vấn danh mục từ bảng product
@@ -50,18 +51,19 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
           .select('category_name')
           .eq('store_id', widget.product.storeId);
 
-      final categoryList = (response as List)
-          .map((item) => item['category_name'] as String)
-          .toSet()
-          .toList();
+      final categoryList =
+          (response as List)
+              .map((item) => item['category_name'] as String)
+              .toSet()
+              .toList();
 
       setState(() {
         categories = categoryList;
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Lỗi kết nối: $e'),
-      ));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Lỗi kết nối: $e')));
     }
   }
 
@@ -70,7 +72,6 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Cập nhật sản phẩm"),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -85,20 +86,28 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
                 border: Border.all(color: Colors.grey),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: _xFile != null
-                  ? Image.file(File(_xFile!.path), fit: BoxFit.cover)
-                  : widget.product.thumbnailUrl.isNotEmpty
-                  ? Image.network(widget.product.thumbnailUrl, fit: BoxFit.cover)
-                  : Icon(Icons.image, size: 80, color: Colors.grey),
+              child:
+                  _xFile != null
+                      ? Image.file(File(_xFile!.path), fit: BoxFit.cover)
+                      : widget.product.thumbnailUrl.isNotEmpty
+                      ? Image.network(
+                        widget.product.thumbnailUrl,
+                        fit: BoxFit.cover,
+                      )
+                      : Icon(Icons.image, size: 80, color: Colors.grey),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 ElevatedButton(
                   onPressed: () async {
-                    var hasPermission = await requestPermission(Permission.photos);
+                    var hasPermission = await requestPermission(
+                      Permission.photos,
+                    );
                     if (hasPermission) {
-                      var xImage = await ImagePicker().pickImage(source: ImageSource.gallery);
+                      var xImage = await ImagePicker().pickImage(
+                        source: ImageSource.gallery,
+                      );
                       if (xImage != null)
                         setState(() {
                           _xFile = xImage;
@@ -175,58 +184,59 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
             SizedBox(height: 16),
             isAddingNewCategory
                 ? TextFormField(
-              controller: txtNewCategory,
-              decoration: InputDecoration(
-                labelText: "Tên danh mục mới",
-                border: OutlineInputBorder(),
-                suffixIcon: IconButton(
-                  icon: Icon(Icons.clear),
-                  onPressed: () {
-                    setState(() {
-                      isAddingNewCategory = false;
-                      txtNewCategory.clear();
-                    });
-                  },
-                ),
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Vui lòng nhập tên danh mục';
-                }
-                return null;
-              },
-            )
-                : Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: selectedCategory,
-                    decoration: InputDecoration(
-                      labelText: 'Danh mục',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: [
-                      ...categories.map((category) => DropdownMenuItem(
-                        value: category,
-                        child: Text(category),
-                      )),
-                    ],
-                    onChanged: (value) {
-
+                  controller: txtNewCategory,
+                  decoration: InputDecoration(
+                    labelText: "Tên danh mục mới",
+                    border: OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(Icons.clear),
+                      onPressed: () {
                         setState(() {
-                          selectedCategory = value;
+                          isAddingNewCategory = false;
+                          txtNewCategory.clear();
                         });
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty){
-                        return 'Vui lòng chọn danh mục';
-                      }
-                      return null;
-                    },
+                      },
+                    ),
                   ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Vui lòng nhập tên danh mục';
+                    }
+                    return null;
+                  },
+                )
+                : Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: selectedCategory,
+                        decoration: InputDecoration(
+                          labelText: 'Danh mục',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: [
+                          ...categories.map(
+                            (category) => DropdownMenuItem(
+                              value: category,
+                              child: Text(category),
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            selectedCategory = value;
+                          });
+                        },
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Vui lòng chọn danh mục';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
 
             SizedBox(height: 16),
             SwitchListTile(
@@ -244,17 +254,24 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
               children: [
                 ElevatedButton(
                   onPressed: () async {
-                    final categoryToSave = isAddingNewCategory
-                        ? txtNewCategory.text.trim()
-                        : selectedCategory;
+                    final categoryToSave =
+                        isAddingNewCategory
+                            ? txtNewCategory.text.trim()
+                            : selectedCategory;
 
                     if (categoryToSave == null || categoryToSave.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Vui lòng nhập hoặc chọn danh mục")),
+                        SnackBar(
+                          content: Text("Vui lòng nhập hoặc chọn danh mục"),
+                        ),
                       );
                       return;
                     }
-                    showSnackBar(context, message: "Đang cập nhật.... ${txtTen.text}", seconds: 10);
+                    showSnackBar(
+                      context,
+                      message: "Đang cập nhật.... ${txtTen.text}",
+                      seconds: 10,
+                    );
 
                     final updatedProduct = Product(
                       id: widget.product.id,
@@ -288,7 +305,11 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
                           .eq('product_id', widget.product.id!);
                     }
 
-                    showSnackBar(context, message: "Đã cập nhật.... ${txtTen.text}", seconds: 2);
+                    showSnackBar(
+                      context,
+                      message: "Đã cập nhật.... ${txtTen.text}",
+                      seconds: 2,
+                    );
                     Navigator.pop(context);
                   },
                   child: Text("Cập nhật"),

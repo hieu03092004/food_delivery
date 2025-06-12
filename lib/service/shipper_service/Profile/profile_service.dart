@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:food_delivery/model/shipper_model/profile_model.dart';
-import 'package:food_delivery/service/shipper_service/Accounts/account_service.dart';
+import 'package:food_delivery/service/auth_servicae/AuthService.dart';
 
 class ProfileService extends GetxController {
   final _profile = Rxn<ProfileModel>();
@@ -11,9 +11,6 @@ class ProfileService extends GetxController {
   final _error = ''.obs;
   final _hasDataChanged = false.obs;
   final _name = ''.obs;
-  final uploadedImage = Rx<File?>(null);
-
-  final AccountService _accountService = Get.find<AccountService>();
 
   ProfileModel? get profile => _profile.value;
   bool get isLoading => _isLoading.value;
@@ -24,16 +21,23 @@ class ProfileService extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _hasDataChanged.value = false;
+    final authService = Get.find<AuthService>();
+    if (authService.isLoggedIn) {
+      fetchProfile(authService.accountId.value);
+    }
   }
 
-  Future<void> fetchProfile(int userId) async {
+  Future<void> fetchProfile(int accountId) async {
     try {
       _isLoading.value = true;
       _error.value = '';
-      final profile = await ProfileSnapshot.getProfile(userId);
-      _profile.value = profile;
-      _name.value = profile?.fullName ?? '';
+      final profile = await ProfileModel.getProfile(accountId);
+      if (profile != null) {
+        _profile.value = profile;
+        _name.value = profile.name;
+      } else {
+        _error.value = 'Không thể tải thông tin profile';
+      }
     } catch (e) {
       _error.value = e.toString();
     } finally {
@@ -41,20 +45,14 @@ class ProfileService extends GetxController {
     }
   }
 
-  Future<void> updateName(int userId, String newName) async {
+  Future<void> updateName(int accountId, String newName) async {
     try {
       _isLoading.value = true;
       _error.value = '';
-      await ProfileSnapshot.updateProfileField(
-        accountId: userId,
-        name: 'full_name',
-        value: newName,
-      );
+      await ProfileModel.updateName(accountId, newName);
       _name.value = newName;
       _hasDataChanged.value = true;
-
-      // Cập nhật AccountService
-      _accountService.updateName(newName);
+      await fetchProfile(accountId);
     } catch (e) {
       _error.value = e.toString();
     } finally {
@@ -70,13 +68,9 @@ class ProfileService extends GetxController {
     try {
       _isLoading.value = true;
       _error.value = '';
-      await ProfileSnapshot.updateProfileField(
-        accountId: accountId,
-        name: name,
-        value: value,
-      );
-      await fetchProfile(accountId);
+      await ProfileModel.updateProfileField(accountId, name, value);
       _hasDataChanged.value = true;
+      await fetchProfile(accountId);
     } catch (e) {
       _error.value = e.toString();
     } finally {
@@ -84,28 +78,19 @@ class ProfileService extends GetxController {
     }
   }
 
-  Future<void> pickAndUploadImage(int userId) async {
+  Future<void> pickAndUploadImage(int accountId) async {
     try {
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
       if (image != null) {
         _isLoading.value = true;
         _error.value = '';
-        final File imageFile = File(image.path);
-        uploadedImage.value = imageFile;
-        final String? avatarUrl = await ProfileSnapshot.uploadAvatar(
-          userId: userId,
-          image: imageFile,
-        );
-        if (avatarUrl != null) {
-          if (profile != null) {
-            _profile.value = profile!.copyWith(avatarUrl: avatarUrl);
-          }
-          _hasDataChanged.value = true;
 
-          // Cập nhật AccountService
-          _accountService.updateAvatar(avatarUrl);
-        }
+        final File imageFile = File(image.path);
+        await ProfileModel.uploadAvatar(accountId, imageFile);
+        _hasDataChanged.value = true;
+        await fetchProfile(accountId);
       }
     } catch (e) {
       _error.value = e.toString();
@@ -115,22 +100,17 @@ class ProfileService extends GetxController {
   }
 
   ImageProvider getAvatarProvider() {
-    if (uploadedImage.value != null) {
-      return FileImage(uploadedImage.value!);
+    if (_profile.value?.avatarUrl != null &&
+        _profile.value!.avatarUrl!.isNotEmpty) {
+      return NetworkImage(_profile.value!.avatarUrl!);
     }
-    final currentProfile = profile;
-    if (currentProfile?.avatarUrl != null &&
-        currentProfile!.avatarUrl!.isNotEmpty) {
-      return NetworkImage(currentProfile.avatarUrl!);
-    }
-    return const AssetImage('images/avatar.jpg');
+    return const AssetImage('assets/images/default_avatar.png');
   }
 
   @override
   void onClose() {
     _profile.close();
     _hasDataChanged.close();
-    uploadedImage.close();
     super.onClose();
   }
 }

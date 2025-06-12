@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:food_delivery/pages/shipper_pages/accounts/accounts_page.dart';
-import 'package:food_delivery/pages/shipper_pages/home/home_pages.dart';
 import 'package:food_delivery/pages/shipper_pages/orders/orders_shipper_pages.dart';
 import 'package:food_delivery/service/auth_servicae/AuthService.dart';
 import 'package:food_delivery/service/shipper_service/Order/Order_service.dart';
@@ -39,12 +38,7 @@ class BottomNavShipper extends StatelessWidget {
       }
     });
 
-    final pages = [
-      HomePages(),
-      OrdersShipperPages(),
-      NotificationsPage(),
-      AccountsPage(),
-    ];
+    final pages = [OrdersShipperPages(), NotificationsPage(), AccountsPage()];
 
     return Scaffold(
       body: Obx(() => pages[currentTabIndex.value]),
@@ -61,10 +55,6 @@ class BottomNavShipper extends StatelessWidget {
           selectedItemColor: const Color(0xffef2b39),
           unselectedItemColor: Colors.grey,
           items: [
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Trang chủ',
-            ),
             const BottomNavigationBarItem(
               icon: Icon(Icons.shopping_bag),
               label: 'Đơn hàng',
@@ -110,8 +100,8 @@ class BottomNavShipper extends StatelessWidget {
           onTap: (index) async {
             currentTabIndex.value = index;
 
-            // Khi bấm vào tab Thông báo (index 2)
-            if (index == 2 &&
+            // Khi bấm vào tab Thông báo (index 1)
+            if (index == 1 &&
                 authService.isLoggedIn &&
                 Get.isRegistered<NotificationService>()) {
               final notificationService = Get.find<NotificationService>();

@@ -14,7 +14,7 @@ class EditNamePage extends StatelessWidget {
     final profileService = Get.find<ProfileService>();
 
     // Set initial value
-    _nameController.text = profileService.profile?.fullName ?? '';
+    _nameController.text = profileService.profile?.name ?? '';
 
     void _saveName() async {
       final newName = _nameController.text.trim();

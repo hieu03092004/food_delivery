@@ -2,99 +2,137 @@ import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProfileModel {
+  final int id;
   final int accountId;
-  final String? fullName;
-  final String email;
-  final String? avatarUrl;
-  final String? address;
-  final String? status;
-  final int? storeId;
-  final double? latitude;
-  final double? longitude;
+  final String name;
   final String? phoneNumber;
   final String? gender;
   final DateTime? dateOfBirth;
+  final String? avatarUrl;
 
   ProfileModel({
+    required this.id,
     required this.accountId,
-    this.fullName,
-    required this.email,
-    this.avatarUrl,
-    this.address,
-    this.status,
-    this.storeId,
-    this.latitude,
-    this.longitude,
+    required this.name,
     this.phoneNumber,
     this.gender,
     this.dateOfBirth,
+    this.avatarUrl,
   });
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
     return ProfileModel(
+      id: json['account_id'],
       accountId: json['account_id'],
-      fullName: json['full_name'],
-      email: json['email'],
-      avatarUrl: json['avatar_url'],
-      address: json['address'],
-      status: json['status'],
-      storeId: json['store_id'],
-      latitude: json['latitude'],
-      longitude: json['longitude'],
+      name: json['full_name'] ?? '',
       phoneNumber: json['phone_number'],
       gender: json['gender'],
       dateOfBirth:
           json['date_of_birth'] != null
               ? DateTime.parse(json['date_of_birth'])
               : null,
+      avatarUrl: json['avatar_url'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'account_id': accountId,
-      'full_name': fullName,
-      'email': email,
-      'avatar_url': avatarUrl,
-      'address': address,
-      'status': status,
-      'store_id': storeId,
-      'latitude': latitude,
-      'longitude': longitude,
+      'full_name': name,
       'phone_number': phoneNumber,
       'gender': gender,
       'date_of_birth': dateOfBirth?.toIso8601String(),
+      'avatar_url': avatarUrl,
     };
   }
 
   ProfileModel copyWith({
+    int? id,
     int? accountId,
-    String? fullName,
-    String? email,
-    String? avatarUrl,
-    String? address,
-    String? status,
-    int? storeId,
-    double? latitude,
-    double? longitude,
+    String? name,
     String? phoneNumber,
     String? gender,
     DateTime? dateOfBirth,
+    String? avatarUrl,
   }) {
     return ProfileModel(
+      id: id ?? this.id,
       accountId: accountId ?? this.accountId,
-      fullName: fullName ?? this.fullName,
-      email: email ?? this.email,
-      avatarUrl: avatarUrl ?? this.avatarUrl,
-      address: address ?? this.address,
-      status: status ?? this.status,
-      storeId: storeId ?? this.storeId,
-      latitude: latitude ?? this.latitude,
-      longitude: longitude ?? this.longitude,
+      name: name ?? this.name,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       gender: gender ?? this.gender,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
     );
+  }
+
+  static Future<ProfileModel?> getProfile(int accountId) async {
+    try {
+      final response =
+          await Supabase.instance.client
+              .from('account')
+              .select()
+              .eq('account_id', accountId)
+              .single();
+      return ProfileModel.fromJson(response);
+    } catch (e) {
+      print('Error getting profile: $e');
+      return null;
+    }
+  }
+
+  static Future<void> updateName(int accountId, String newName) async {
+    try {
+      await Supabase.instance.client
+          .from('account')
+          .update({'full_name': newName})
+          .eq('account_id', accountId);
+    } catch (e) {
+      print('Error updating name: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> updateProfileField(
+    int accountId,
+    String fieldName,
+    dynamic value,
+  ) async {
+    try {
+      await Supabase.instance.client
+          .from('account')
+          .update({fieldName: value})
+          .eq('account_id', accountId);
+    } catch (e) {
+      print('Error updating profile field: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> uploadAvatar(int accountId, File image) async {
+    try {
+      final String fileName = 'avatar_$accountId.jpg';
+      final String filePath = 'avatars/$fileName';
+
+      // Upload image to storage
+      await Supabase.instance.client.storage
+          .from('images')
+          .upload(fileName, image, fileOptions: FileOptions(upsert: true));
+
+      // Get public URL
+      final String avatarUrl = Supabase.instance.client.storage
+          .from('images')
+          .getPublicUrl(fileName);
+
+      // Update profile with new avatar URL
+      await Supabase.instance.client
+          .from('account')
+          .update({'avatar_url': avatarUrl})
+          .eq('account_id', accountId);
+    } catch (e) {
+      print('Error uploading avatar: $e');
+      rethrow;
+    }
   }
 }
 
@@ -106,7 +144,7 @@ class ProfileSnapshot {
         await _supabase
             .from('account')
             .select(
-              'account_id, full_name, email, avatar_url, address, status, store_id, latitude, longitude,phone_number,gender,date_of_birth',
+              'account_id, full_name, avatar_url, address, status, store_id, latitude, longitude,phone_number,gender,date_of_birth',
             )
             .eq('account_id', userId)
             .single();

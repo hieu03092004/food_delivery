@@ -5,7 +5,6 @@ import 'package:food_delivery/pages/shipper_pages/accounts/profile/profile_infor
 import 'package:food_delivery/pages/shipper_pages/accounts/profile/profile_information/editPhoneNumber.dart';
 import 'package:food_delivery/service/shipper_service/Profile/profile_service.dart';
 import 'package:food_delivery/service/auth_servicae/AuthService.dart';
-import 'editEmail.dart';
 import 'editName.dart';
 
 class Profile extends StatelessWidget {
@@ -99,17 +98,6 @@ class Profile extends StatelessWidget {
                     ),
                     const Divider(),
                     // Personal Information
-                    _buildInfoTile(
-                      context,
-                      'Email',
-                      profileService.profile?.email ?? '',
-                      () => _navigateToEdit(
-                        context,
-                        'Email',
-                        authService.accountId.value,
-                        profileService,
-                      ),
-                    ),
                     _buildInfoTile(
                       context,
                       'Số điện thoại',
@@ -225,20 +213,6 @@ class Profile extends StatelessWidget {
         );
         if (newName != null && newName.isNotEmpty) {
           await profileService.updateName(userId, newName);
-        }
-        break;
-
-      case 'Email':
-        final String? newEmail = await Navigator.push<String?>(
-          context,
-          MaterialPageRoute(builder: (_) => const EditEmailPage()),
-        );
-        if (newEmail != null && newEmail.isNotEmpty) {
-          await profileService.updateProfileField(
-            accountId: userId,
-            name: 'email',
-            value: newEmail,
-          );
         }
         break;
 

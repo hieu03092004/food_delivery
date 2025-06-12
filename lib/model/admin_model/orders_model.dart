@@ -73,6 +73,20 @@ class OrderSnapshot {
   }
 
   static Future<Map<int, Order>> getOrder() async {
+    final response = await supabase
+        .from('orders')
+        .select('*, order_item(quantity, product(*))');
+
+    print('Dữ liệu Supabase getOrder: $response');
+
+    final orders = (response as List)
+        .map((json) => Order.fromMap(json as Map<String, dynamic>))
+        .toList();
+
+    return {for (var order in orders) order.orderId: order};
+  }
+
+  static Future<Map<int, Order>> getOrder2() async {
     return getMapData(
       table: "orders",
       fromJson: (json) => Order.fromMap(json),
