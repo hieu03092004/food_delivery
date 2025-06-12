@@ -19,8 +19,6 @@ class _PageUpdateStoreState extends State<PageUpdateStore> {
   final txtAddress = TextEditingController();
   final txtOpenTime = TextEditingController();
   final txtCloseTime = TextEditingController();
-  // final txtLatitude = TextEditingController();
-  // final txtLongitude = TextEditingController();
   final txtCommission = TextEditingController();
 
   Map<String, dynamic>? storeData;
@@ -46,8 +44,6 @@ class _PageUpdateStoreState extends State<PageUpdateStore> {
       txtAddress.text = storeData!['address'] ?? '';
       txtOpenTime.text = storeData!['open_time'] ?? '';
       txtCloseTime.text = storeData!['close_time'] ?? '';
-      // txtLatitude.text = storeData!['latitude']?.toString() ?? '';
-      // txtLongitude.text = storeData!['longitude']?.toString() ?? '';
       txtCommission.text = storeData!['shipper_commission']?.toString() ?? '';
     }
 
@@ -112,10 +108,6 @@ class _PageUpdateStoreState extends State<PageUpdateStore> {
             SizedBox(height: 16),
             TextFormField(controller: txtCloseTime, decoration: InputDecoration(labelText: "Giờ đóng cửa", border: OutlineInputBorder())),
             SizedBox(height: 16),
-            // TextFormField(controller: txtLatitude, decoration: const InputDecoration(labelText: "Latitude", border: OutlineInputBorder()), keyboardType: TextInputType.number),
-            // const SizedBox(height: 16),
-            // TextFormField(controller: txtLongitude, decoration: const InputDecoration(labelText: "Longitude", border: OutlineInputBorder()), keyboardType: TextInputType.number),
-            // const SizedBox(height: 16),
             TextFormField(controller: txtCommission, decoration: InputDecoration(labelText: "Hoa hồng shipper", border: OutlineInputBorder()), keyboardType: TextInputType.number),
             SizedBox(height: 20),
             ElevatedButton(
@@ -146,7 +138,7 @@ class _PageUpdateStoreState extends State<PageUpdateStore> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text("Đã cập nhật cửa hàng")),
                 );
-                Navigator.pop(context);
+                Navigator.pop(context, true);
               },
               child: Text("Cập nhật"),
             )

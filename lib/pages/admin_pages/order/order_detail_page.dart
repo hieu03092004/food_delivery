@@ -37,7 +37,7 @@ class OrderDetailPage extends StatelessWidget {
     );
 
     if (result == true && context.mounted) {
-      Navigator.pop(context);
+      Navigator.pop(context, true);
     }
   }
   @override

@@ -173,30 +173,59 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
             ),
 
             SizedBox(height: 16),
-
-            DropdownButtonFormField<String>(
-              value: selectedCategory,
+            isAddingNewCategory
+                ? TextFormField(
+              controller: txtNewCategory,
               decoration: InputDecoration(
-                labelText: 'Danh mục',
+                labelText: "Tên danh mục mới",
                 border: OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.clear),
+                  onPressed: () {
+                    setState(() {
+                      isAddingNewCategory = false;
+                      txtNewCategory.clear();
+                    });
+                  },
+                ),
               ),
-              items: categories.map((category) {
-                return DropdownMenuItem<String>(
-                  value: category,
-                  child: Text(category),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  selectedCategory = value;
-                });
-              },
               validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Vui lòng chọn danh mục';
+                if (value == null || value.trim().isEmpty) {
+                  return 'Vui lòng nhập tên danh mục';
                 }
                 return null;
               },
+            )
+                : Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: selectedCategory,
+                    decoration: InputDecoration(
+                      labelText: 'Danh mục',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: [
+                      ...categories.map((category) => DropdownMenuItem(
+                        value: category,
+                        child: Text(category),
+                      )),
+                    ],
+                    onChanged: (value) {
+
+                        setState(() {
+                          selectedCategory = value;
+                        });
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty){
+                        return 'Vui lòng chọn danh mục';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+              ],
             ),
 
             SizedBox(height: 16),
@@ -227,54 +256,12 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
                     }
                     showSnackBar(context, message: "Đang cập nhật.... ${txtTen.text}", seconds: 10);
 
-                    // final updatedProduct = Product(
-                    //   id: widget.product.id,
-                    //   name: txtTen.text,
-                    //   description: txtMoTa.text,
-                    //   discountPercent: double.parse(txtDiscount.text),
-                    //   thumbnailUrl: widget.product.thumbnailUrl,
-                    //   isDeleted: isDeleted,
-                    //   storeId: widget.product.storeId,
-                    //   price: double.parse(txtGia.text),
-                    //   unit: txtUnit.text,
-                    //   categoryName: categoryToSave,
-                    // );
-                    //
-                    // // Cập nhật thông tin sản phẩm trong DB
-                    // await Supabase.instance.client
-                    //     .from('product')
-                    //     .update(updatedProduct.toMap())
-                    //     .eq('product_id', widget.product.id!);
-                    //
-                    // if (_xFile != null) {
-                    //   var imageUrl = await updateImage(
-                    //     image: File(_xFile!.path),
-                    //     bucket: "images",
-                    //     path: "food/product_${widget.product.id}.jpg",
-                    //     upsert: true,
-                    //   );
-                    //   await Supabase.instance.client
-                    //       .from('product')
-                    //       .update({'thumbnail_url': imageUrl})
-                    //       .eq('product_id', widget.product.id!);
-                    // }
-
-                    String thumbnailUrl = widget.product.thumbnailUrl;
-                    if (_xFile != null) {
-                        thumbnailUrl = await updateImage(
-                          image: File(_xFile!.path),
-                          bucket: "images",
-                          path: "food/product_${widget.product.id}.jpg",
-                          upsert: true,
-                        );
-                    }
-
-                    Product updatedProduct = Product(
+                    final updatedProduct = Product(
                       id: widget.product.id,
                       name: txtTen.text,
                       description: txtMoTa.text,
                       discountPercent: double.parse(txtDiscount.text),
-                      thumbnailUrl: thumbnailUrl,
+                      thumbnailUrl: widget.product.thumbnailUrl,
                       isDeleted: isDeleted,
                       storeId: widget.product.storeId,
                       price: double.parse(txtGia.text),
@@ -282,11 +269,24 @@ class _PageUpdateProductState extends State<PageUpdateProduct> {
                       categoryName: categoryToSave,
                     );
 
+                    // Cập nhật thông tin sản phẩm trong DB
                     await Supabase.instance.client
                         .from('product')
                         .update(updatedProduct.toMap())
                         .eq('product_id', widget.product.id!);
 
+                    if (_xFile != null) {
+                      var imageUrl = await updateImage(
+                        image: File(_xFile!.path),
+                        bucket: "images",
+                        path: "food/product_${widget.product.id}.jpg",
+                        upsert: true,
+                      );
+                      await Supabase.instance.client
+                          .from('product')
+                          .update({'thumbnail_url': imageUrl})
+                          .eq('product_id', widget.product.id!);
+                    }
 
                     showSnackBar(context, message: "Đã cập nhật.... ${txtTen.text}", seconds: 2);
                     Navigator.pop(context);
