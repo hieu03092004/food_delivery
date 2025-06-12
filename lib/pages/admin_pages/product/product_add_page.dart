@@ -64,7 +64,6 @@ class _PageAddProductState extends State<PageAddProduct> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Thêm sản phẩm"),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

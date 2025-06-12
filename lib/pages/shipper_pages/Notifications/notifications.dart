@@ -17,17 +17,13 @@ class NotificationsPage extends StatelessWidget {
       // Chỉ khởi tạo khi đã đăng nhập
       if (userId != 0) {
         if (!Get.isRegistered<NotificationService>()) {
-          debugPrint('Registering NotificationService with userId: $userId');
+        
           Get.put(NotificationService(userId), permanent: true);
-        } else {
-          debugPrint('NotificationService already registered');
-        }
+        } 
 
         final service = Get.find<NotificationService>();
         await service.initializeTodayNotifications();
-      } else {
-        debugPrint('User not logged in, skipping notification initialization');
-      }
+      } 
     });
   }
 

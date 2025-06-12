@@ -1,8 +1,12 @@
-import 'package:flutter/material.dart';
-import 'package:food_delivery/widget/default_appBar.dart';
-import 'package:get/get.dart';
 
-import '../../../service/auth_servicae/AuthService.dart';
+import 'package:flutter/material.dart';
+
+import 'package:get/get.dart';
+import 'package:food_delivery/service/auth_servicae/AuthService.dart';
+
+import 'package:food_delivery/model/customer_model/account_model.dart';
+import 'package:food_delivery/widget/default_appBar.dart';
+
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -12,85 +16,71 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // Thêm biến account (cần được khởi tạo từ service hoặc state management)
-  final account = AccountModel(fullName: "Tên người dùng"); // Tạm thời
+  final _auth = Get.find<AuthService>();
+  Account? _account;
+  bool _loading = true;
 
-  static const Color _textColor = Colors.black87; // Định nghĩa màu text
+  @override
+  void initState() {
+    super.initState();
+    _loadAccount();
+  }
 
-  Future<void> _navigate(BuildContext context, String screenName) async {
-    if (screenName == 'Đăng xuất') {
-      // Xử lý đăng xuất
-      await _handleLogout(context);
+  Future<void> _loadAccount() async {
+    final id = _auth.accountId.value;
+    if (id == 0) {
+      // chưa login → có thể điều hướng đến login
+      setState(() => _loading = false);
       return;
+    }
+    try {
+      final acc = await AccountSnapshot.getAccount(id);
+      setState(() {
+        _account = acc;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() => _loading = false);
+      Get.snackbar('Lỗi', 'Không thể tải hồ sơ: $e');
+    }
+  }
+
+  Future<void> _navigate(BuildContext ctx, String screen) async {
+    if (screen == 'Hồ sơ cá nhân') {
+      if (_account != null) {
+        // await Get.to(() => ProfiledetailPage(account: _account!));
+        // khi quay về có thể reload
+        _loadAccount();
+      }
+    } else if (screen == 'Đăng xuất') {
+      await _handleLogout(ctx);
     }
   }
 
   Future<void> _handleLogout(BuildContext context) async {
-    // Hiển thị dialog xác nhận
-    final shouldLogout = await showDialog<bool>(
+    final confirm = await showDialog<bool>(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Xác nhận đăng xuất'),
-          content: const Text('Bạn có chắc chắn muốn đăng xuất?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Hủy'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text(
-                'Đăng xuất',
-              ),
-            ),
-          ],
-        );
-      },
+      builder: (_) => AlertDialog(
+        title: const Text('Xác nhận đăng xuất'),
+        content: const Text('Bạn có chắc chắn muốn đăng xuất?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hủy')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Đăng xuất')),
+        ],
+      ),
     );
-
-    // Nếu user xác nhận đăng xuất
-    if (shouldLogout == true) {
+    if (confirm == true) {
+      showDialog(
+        context: context, barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
       try {
-        // Hiển thị loading
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => const Center(
-            child: CircularProgressIndicator(),
-          ),
-        );
-
-        // Gọi signOut từ AuthService
-        final authService = Get.find<AuthService>();
-        await authService.signOut();
-
-        // Đóng loading dialog
-        if (Navigator.canPop(context)) {
-          Navigator.pop(context);
-        }
-
-        // Hiển thị thông báo thành công
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đăng xuất thành công'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
+        await _auth.signOut();
+        Navigator.pop(context); // close loading
+        Get.offAllNamed('/login');
       } catch (e) {
-        // Đóng loading dialog nếu có lỗi
-        if (Navigator.canPop(context)) {
-          Navigator.pop(context);
-        }
-
-        // Hiển thị lỗi
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lỗi đăng xuất: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        Navigator.pop(context);
+        Get.snackbar('Lỗi', 'Đăng xuất thất bại: $e', backgroundColor: Colors.red);
       }
     }
   }
@@ -99,76 +89,35 @@ class _ProfilePageState extends State<ProfilePage> {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
-    Widget? trailing,
   }) {
     return ListTile(
-      leading: Icon(icon, size: 24),
-      title: Text(
-        label,
-        style: const TextStyle(fontSize: 15),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      horizontalTitleGap: 20,
+      leading: Icon(icon),
+      title: Text(label),
       onTap: onTap,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: CommonAppBar(
-        title: "Tài khoản", showCartIcon: false,),
-      body: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          // ===== Header user =====
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                const CircleAvatar(
-                  radius: 24,
-                  backgroundImage: AssetImage('images/avatar.jpg'),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        account.fullName,
-                        style: const TextStyle(
-                          color: _textColor,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      GestureDetector(
-                        onTap: () => _navigate(context, 'Hồ sơ cá nhân'),
-                        child: const Text(
-                          'Chỉnh sửa hồ sơ',
-                          style: TextStyle(
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
+    if (_loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
-          // ===== Các mục menu =====
+    return Scaffold(
+      appBar: const CommonAppBar(title: "Tài khoản", showCartIcon: false),
+      body: ListView(
+        children: [
+          const SizedBox(height: 16),
+          if (_account != null) _buildHeader(_account!),
+          const Divider(),
           _buildMenuItem(
             icon: Icons.person_outline,
             label: 'Hồ sơ cá nhân',
-            onTap: () => _navigate(context, 'Hồ sơ cá nhân'),
-          ),
-          const Divider(height: 1),
+            onTap: () {
 
+            },
+          ),
+          const Divider(),
           _buildMenuItem(
             icon: Icons.logout,
             label: 'Đăng xuất',
@@ -178,11 +127,34 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
-}
 
-// Model class tạm thời - bạn cần thay thế bằng model thực tế
-class AccountModel {
-  final String fullName;
+  Widget _buildHeader(Account acc) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 32,
+            backgroundImage:
+            acc.avatarUrl.isNotEmpty ? NetworkImage(acc.avatarUrl) : null,
+            child: acc.avatarUrl.isEmpty ? const Icon(Icons.person, size: 32) : null,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(acc.fullName,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
 
-  AccountModel({required this.fullName});
+                const SizedBox(height: 4),
+                Text(acc.phoneNumber),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

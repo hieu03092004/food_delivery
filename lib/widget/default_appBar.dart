@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:food_delivery/pages/authentication/PageAuthUser.dart';
 import 'package:food_delivery/pages/customer_pages/cart/cart_page.dart';
 import 'package:food_delivery/service/auth_servicae/AuthService.dart';
-import 'package:food_delivery/service/customer_service/Cart/cart_service.dart';
+
+import 'package:food_delivery/service/customer_service/controller_cart.dart';
 import 'package:get/get.dart';
 import 'package:badges/badges.dart' as badges;
 
@@ -15,8 +16,10 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final auth = Get.find<AuthService>();
-    final cartService = Get.find<CartService>();
+    final cartService = Get.find<ControllerCart>();
     Color themeOrange = Color(0xFFEE4D2D);
+    print("id account ${auth.accountId.value}");
+
     return AppBar(
       title: Text(
         title,
@@ -46,9 +49,11 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+
                     child: Obx(() {
                       final loggedIn = auth.isLoggedIn;
                       final id = auth.accountId.value;
+
                       return IconButton(
                         padding: const EdgeInsets.only(right: 16.0, top: 4.0),
                         icon: const Icon(

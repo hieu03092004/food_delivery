@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:get/get.dart';
 
@@ -39,20 +38,13 @@ class OrderService extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    debugPrint('🚀 Initializing OrderService');
     for (var status in tabs) {
-      debugPrint('📥 Loading initial data for status: $status');
       loadOrdersFor(status);
     }
   }
 
   List<OrderWithItems> getOrdersByStatus(String status) {
-    debugPrint('🔍 Getting orders for status: $status');
-    debugPrint(
-      '📦 Current orders in cache: ${_ordersByStatus[status]?.length ?? 0}',
-    );
     if (_ordersByStatus[status] == null) {
-      debugPrint('⚠️ No data in cache for status: $status, triggering load');
       loadOrdersFor(status);
     }
     return _ordersByStatus[status] ?? [];
@@ -62,41 +54,25 @@ class OrderService extends GetxController {
   Map<String, String> get nextStatusMap => _nextStatusMap;
 
   Future<void> loadOrdersFor(String uiStatus) async {
-    debugPrint('🔄 Loading orders for UI status: $uiStatus');
     isLoading.value = true;
     try {
       final authService = Get.find<AuthService>();
       final userId = authService.accountId.value;
 
       if (userId == 0) {
-        debugPrint('❌ User not logged in');
         throw Exception('User chưa login');
       }
 
-      debugPrint('👤 User ID: $userId');
       final dbStatus = _uiToDbStatusMap[uiStatus];
       if (dbStatus == null) {
-        debugPrint('⚠️ Invalid UI status: $uiStatus');
         return;
       }
 
       final list = await OrderSnapshot.getOrdersByStatus(dbStatus, userId);
-      debugPrint('📦 Received ${list.length} orders for status: $uiStatus');
-
-      if (list.isNotEmpty) {
-        debugPrint('📝 First order details:');
-        debugPrint('- ID: ${list.first.id}');
-        debugPrint('- Status: ${list.first.status}');
-        debugPrint('- Items: ${list.first.items.length}');
-      }
-
       _ordersByStatus[uiStatus] = list;
-      debugPrint(
-        '✅ Updated cache for status: $uiStatus with ${list.length} orders',
-      );
       update();
     } catch (e) {
-      debugPrint('❌ Error loading $uiStatus: $e');
+      // Error handling
     } finally {
       isLoading.value = false;
     }
@@ -115,7 +91,6 @@ class OrderService extends GetxController {
       }
       return false;
     } catch (e) {
-      print('Error processing next status: $e');
       return false;
     }
   }
@@ -133,7 +108,6 @@ class OrderService extends GetxController {
       }
       return false;
     } catch (e) {
-      print('Error processing delivered failed: $e');
       return false;
     }
   }
@@ -203,7 +177,6 @@ class OrderService extends GetxController {
         newDbStatus: nextDb,
       );
     } catch (e) {
-      print('❌ Lỗi khi xử lý cập nhật trạng thái: $e');
       return UpdateOrderResult(success: false, message: 'Lỗi: $e');
     }
   }
@@ -256,7 +229,6 @@ class OrderService extends GetxController {
         newDbStatus: nextDb,
       );
     } catch (e) {
-      print('❌ Lỗi khi xử lý giao thất bại: $e');
       return UpdateOrderResult(success: false, message: 'Lỗi: $e');
     }
   }
@@ -267,7 +239,6 @@ class OrderService extends GetxController {
     required String body,
   }) async {
     if (deviceToken == null) {
-      print('⚠️ Device token null, không thể gửi FCM');
       return false;
     }
 
@@ -283,20 +254,11 @@ class OrderService extends GetxController {
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        print('📦 Gửi FCM thành công: ${response.body}');
-        try {
-          final responseData = jsonDecode(response.body);
-          print('📦 Chi tiết phản hồi: $responseData');
-        } catch (jsonError) {
-          print('⚠️ Lỗi phân tích JSON phản hồi: $jsonError');
-        }
         return true;
       } else {
-        print('⚠️ Gửi FCM thất bại: ${response.statusCode} - ${response.body}');
         return false;
       }
     } catch (httpError) {
-      print('❌ Lỗi kết nối khi gửi FCM: $httpError');
       return false;
     }
   }

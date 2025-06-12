@@ -1,3 +1,5 @@
+import 'package:food_delivery/helpers/supabase_helper.dart';
+
 class Store {
   final int id;
   final String name;
@@ -28,6 +30,24 @@ class Store {
       shipperCommission: json['shipper_commission'] is String
           ? double.parse(json['shipper_commission'])
           : (json['shipper_commission'] as num).toDouble(),
+    );
+  }
+}
+class StoreSnapshot{
+  static Future<Map<int, Store>> getMapStores() {
+    return getMapData<Store>(
+      table: 'store',
+      fromJson: (json) => Store.fromJson(json),
+      getID: (store) => store.id,
+    );
+  }
+  static ListenChangeData(Map<int, Store> maps,{Function()? updateUI}){
+    return ListenChangeDatalHelper(
+      maps,
+      table: "store",
+      channel: "public:store",
+      fromJson: (json) => Store.fromJson(json),
+      getID: (t) => t.id,
     );
   }
 }

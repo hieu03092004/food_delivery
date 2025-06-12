@@ -142,7 +142,6 @@ class OrderSnapshot {
       );
 
       if (raw is! List) {
-        print('⚠️ Unexpected RPC result, not a List: $raw');
         return [];
       }
 
@@ -173,7 +172,6 @@ class OrderSnapshot {
         );
       }).toList();
     } catch (e) {
-      print('Error fetching orders by status: $e');
       return [];
     }
   }
@@ -186,7 +184,6 @@ class OrderSnapshot {
           .eq('order_id', orderId);
       return true;
     } catch (e) {
-      print('Error updating order status: $e');
       return false;
     }
   }
@@ -200,17 +197,8 @@ class OrderSnapshot {
               .eq('account_id', customerId)
               .single();
 
-      final String? deviceToken = tokenRes['tokendevice'] as String?;
-
-      if (deviceToken == null) {
-        print('⚠️ User $customerId chưa có deviceToken');
-      } else {
-        print('👉 Device token: $deviceToken');
-      }
-
-      return deviceToken;
+      return tokenRes['tokendevice'] as String?;
     } catch (e) {
-      print('❌ Lỗi khi lấy device token: $e');
       return null;
     }
   }
@@ -231,7 +219,6 @@ class OrderSnapshot {
 
       return true;
     } catch (e) {
-      print('❌ Lỗi khi tạo notification: $e');
       return false;
     }
   }

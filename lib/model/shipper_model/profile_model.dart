@@ -76,7 +76,6 @@ class ProfileModel {
               .single();
       return ProfileModel.fromJson(response);
     } catch (e) {
-      print('Error getting profile: $e');
       return null;
     }
   }
@@ -88,7 +87,6 @@ class ProfileModel {
           .update({'full_name': newName})
           .eq('account_id', accountId);
     } catch (e) {
-      print('Error updating name: $e');
       rethrow;
     }
   }
@@ -104,7 +102,6 @@ class ProfileModel {
           .update({fieldName: value})
           .eq('account_id', accountId);
     } catch (e) {
-      print('Error updating profile field: $e');
       rethrow;
     }
   }
@@ -112,7 +109,7 @@ class ProfileModel {
   static Future<void> uploadAvatar(int accountId, File image) async {
     try {
       final String fileName = 'avatar_$accountId.jpg';
-      final String filePath = 'avatars/$fileName';
+    
 
       // Upload image to storage
       await Supabase.instance.client.storage
@@ -130,7 +127,6 @@ class ProfileModel {
           .update({'avatar_url': avatarUrl})
           .eq('account_id', accountId);
     } catch (e) {
-      print('Error uploading avatar: $e');
       rethrow;
     }
   }
@@ -148,7 +144,6 @@ class ProfileSnapshot {
             )
             .eq('account_id', userId)
             .single();
-    print('Data:$data');
     return ProfileModel.fromJson(data);
   }
 
@@ -165,10 +160,8 @@ class ProfileSnapshot {
               .eq('account_id', accountId)
               .select()
               .single();
-      print('Đã cập nhật $name thành $value cho account_id $accountId');
       return true;
     } catch (e) {
-      print('Lỗi khi cập nhật profile: $e');
       return false;
     }
   }
@@ -206,7 +199,6 @@ class ProfileSnapshot {
         upsert: true,
       );
 
-      print('Public URL: $publicUrl');
       final response =
           await _supabase
               .from('account')
@@ -215,10 +207,8 @@ class ProfileSnapshot {
               .select()
               .single();
 
-      print('Cập nhật avatar_url thành công');
       return publicUrl;
     } catch (e) {
-      print('Lỗi trong uploadAvatar: $e');
       return null;
     }
   }

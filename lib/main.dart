@@ -8,8 +8,8 @@ import 'package:food_delivery/pages/customer_pages/bottom_customer_nav.dart';
 import 'package:food_delivery/pages/customer_pages/cart/cart_page.dart';
 import 'package:food_delivery/pages/shipper_pages/Notifications/notifications.dart';
 import 'package:food_delivery/service/auth_servicae/AuthService.dart';
-import 'package:food_delivery/service/customer_service/Cart/cart_service.dart';
-import 'package:food_delivery/service/shipper_service/Notifications/notification_service.dart';
+
+import 'package:food_delivery/service/customer_service/controller_cart.dart';
 import 'package:get/get.dart';
 import 'firebase_options.dart';
 
@@ -20,16 +20,10 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   await Database.init();
-  // Put services vào GetX
-  final authService = Get.put(AuthService(), permanent: true);
-  Get.put(CartService(), permanent: true);
 
-  // Đợi cho đến khi accountId có giá trị
-  await Future.delayed(const Duration(seconds: 5));
-  final userId = authService.accountId.value;
-  if (userId != 0) {
-    Get.put(NotificationService(userId), permanent: true);
-  }
+  // Put services vào GetX
+  Get.put(AuthService(), permanent: true);
+  Get.put(ControllerCart(), permanent: true);
 
   runApp(const MyApp());
 }
@@ -84,6 +78,7 @@ class _MyAppState extends State<MyApp> {
         GetPage(
           name: '/cart',
           page: () {
+            print("Loi roi ahuhu");
             final id = Get.find<AuthService>().accountId.value;
             return id != 0 ? CartPage(accountId: id) : const PageAuthUser();
           },

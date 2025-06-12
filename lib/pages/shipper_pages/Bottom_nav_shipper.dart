@@ -7,8 +7,6 @@ import 'package:food_delivery/service/shipper_service/Order/Order_service.dart';
 import 'package:food_delivery/service/shipper_service/Notifications/notification_service.dart';
 import 'Notifications/notifications.dart';
 
-import '../../model/shipper_model/Notification_model.dart';
-
 class BottomNavShipper extends StatelessWidget {
   const BottomNavShipper({Key? key}) : super(key: key);
 
@@ -28,9 +26,7 @@ class BottomNavShipper extends StatelessWidget {
       if (authService.isLoggedIn) {
         final userId = authService.accountId.value;
         if (!Get.isRegistered<NotificationService>()) {
-          print(
-            'Initializing NotificationService in BottomNavShipper with userId: $userId',
-          );
+         
           Get.put(NotificationService(userId), permanent: true);
         }
         // Fetch unread count
