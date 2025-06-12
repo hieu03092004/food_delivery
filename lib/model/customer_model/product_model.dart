@@ -1,6 +1,8 @@
 // Product Model
+import 'package:food_delivery/helpers/supabase_helper.dart';
 import 'package:food_delivery/model/customer_model/store_model.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_auth_ui/supabase_auth_ui.dart';
 
 class Product {
   final int id;
@@ -71,4 +73,48 @@ class Product {
 
   String get priceText => _currencyFormat.format(price);
   String get discountedPriceText => _currencyFormat.format(discountedPrice);
+}
+class ProductSnapShot{
+
+  static Future<Map<int, Product>> getMapProductsByStore(int storeId) async {
+    final supabase = Supabase.instance.client;
+
+    // Query riêng với nested select cho product
+    final data = await supabase
+        .from('product')
+        .select('*, store(*)')  // Include store data
+        .eq('store_id', storeId)  // Filter ngay từ database
+        .eq('is_deleted', false); // Filter deleted ngay từ database
+
+    // Map data thành Product objects
+    final products = <int, Product>{};
+    for (var item in data) {
+      try {
+        final product = Product.fromJson(item);
+        products[product.id] = product;
+      } catch (e) {
+        print('Error parsing product: $e');
+        print('Product data: $item');
+        // Skip lỗi item này, tiếp tục với item khác
+      }
+    }
+    return products;
+  }
+  /// Listen realtime chỉ sản phẩm của storeId
+  static listenProductChangesByStore(
+      Map<int, Product> maps,
+      int storeId, {
+        void Function()? updateUI,
+      }) {
+    return ListenChangeDatalHelper<Product>(
+      maps,
+      table: 'product',
+      channel: 'public:product',
+      fromJson: (json) => Product.fromJson(json),
+      getID: (p) => p.id,
+      updateUI: updateUI,
+      filter: (p) => p.storeID == storeId && !p.isDeleted,
+    );
+  }
+
 }

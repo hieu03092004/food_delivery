@@ -8,7 +8,8 @@ import 'package:food_delivery/pages/customer_pages/bottom_customer_nav.dart';
 import 'package:food_delivery/pages/customer_pages/cart/cart_page.dart';
 import 'package:food_delivery/pages/shipper_pages/Notifications/notifications.dart';
 import 'package:food_delivery/service/auth_servicae/AuthService.dart';
-import 'package:food_delivery/service/customer_service/Cart/cart_service.dart';
+
+import 'package:food_delivery/service/customer_service/controller_cart.dart';
 import 'package:get/get.dart';
 import 'firebase_options.dart';
 
@@ -21,7 +22,7 @@ Future<void> main() async {
   await Database.init();
   // Put services vào GetX
   Get.put(AuthService(), permanent: true);
-  Get.put(CartService(), permanent: true);
+  Get.put(ControllerCart(), permanent: true);
   runApp(const MyApp());
 }
 

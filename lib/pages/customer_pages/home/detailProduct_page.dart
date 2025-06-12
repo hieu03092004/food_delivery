@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:food_delivery/model/customer_model/cart_model.dart';
 import 'package:food_delivery/model/customer_model/product_model.dart';
 
 import 'package:flutter/material.dart';
 
 import 'package:flutter/material.dart';
+import 'package:food_delivery/pages/authentication/PageAuthUser.dart';
+import 'package:food_delivery/pages/customer_pages/checkout_page.dart';
 import 'package:food_delivery/service/auth_servicae/AuthService.dart';
-import 'package:food_delivery/service/customer_service/Cart/cart_service.dart';
+
+import 'package:food_delivery/service/customer_service/controller_cart.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
@@ -23,7 +27,7 @@ class DetailProductPage extends StatefulWidget {
 class _DetailProductPageState extends State<DetailProductPage> {
   Color themeOrange = Color(0xFFEE4D2D);
   int quantity = 1;
-  final cartService = Get.find<CartService>();
+  final cartService = Get.find<ControllerCart>();
   final auth = Get.find<AuthService>();
 
 
@@ -135,7 +139,7 @@ class _DetailProductPageState extends State<DetailProductPage> {
                   child: InkWell(
                     onTap: () {
                       print('Đã nhấn giỏ hàng');
-                      _showAddToCartModal();
+                      _showAddToCartModal("Thêm vào giỏ hàng");
                     },
                     child: Center(
                       child: Icon(Icons.shopping_cart, color: Colors.white, size: 25),
@@ -145,7 +149,7 @@ class _DetailProductPageState extends State<DetailProductPage> {
                 Expanded(
                   child: InkWell(
                     onTap: () {
-                      // tap ô 2
+                      _showAddToCartModal("Mua ngay");
                     },
                     child: Center(
                       child: Text(
@@ -170,17 +174,15 @@ class _DetailProductPageState extends State<DetailProductPage> {
 
 
 
-  void _showAddToCartModal() {
+  void _showAddToCartModal(String buttonText) {
+    int quantity = 1; // ← khai báo ở đây, bên ngoài builder
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) =>
-          Container(
-            decoration: BoxDecoration(
-
-            ),
+        builder: (context, setModalState) {
+          return Container(
             padding: const EdgeInsets.all(16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -222,10 +224,7 @@ class _DetailProductPageState extends State<DetailProductPage> {
                     ),
                   ],
                 ),
-
-
                 Row(
-
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     const Text(
@@ -233,14 +232,9 @@ class _DetailProductPageState extends State<DetailProductPage> {
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     IconButton(
-                      onPressed: () {
-                        if (quantity > 1) {
-                          setModalState(() {
-                            quantity--;
-                          });
-                          setState(() {});
-                        }
-                      },
+                      onPressed: quantity > 1
+                          ? () => setModalState(() => quantity--)
+                          : null,
                       icon: const Icon(Icons.remove_circle_outline),
                     ),
                     Text(
@@ -248,16 +242,12 @@ class _DetailProductPageState extends State<DetailProductPage> {
                       style: const TextStyle(fontSize: 16),
                     ),
                     IconButton(
-                      onPressed: () {
-                        setModalState(() {
-                          quantity++;
-                        });
-                        setState(() {});
-                      },
+                      onPressed: () => setModalState(() => quantity++),
                       icon: const Icon(Icons.add_circle_outline),
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
@@ -269,21 +259,52 @@ class _DetailProductPageState extends State<DetailProductPage> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    onPressed: () async{
-                      print('Đã nhấn Thêm vào giỏ hàng');
-                      await cartService.addProductToCart(auth.accountId.value, widget.product.id, quantity);
+                    onPressed: () async {
+                      if (!auth.isLoggedIn) {
+                        Get.to(() => PageAuthUser());
+                        return;
+                      }
 
+                      // Thêm sản phẩm vào giỏ với số lượng đã chọn
+                      await cartService.addProductToCart(
+                        widget.product.id,
+                        quantity: quantity,
+                      );
+
+                      if (buttonText == 'Mua ngay') {
+                        // Mua ngay: đóng modal → chuyển đến CheckoutPage
+                        Get.back();
+                        final cartItem = CartItem(
+                          product: widget.product,
+                          quantity: quantity,
+                          accountId: auth.accountId.value,
+                        );
+                        Get.to(() => CheckoutPage(selectedItems: [cartItem]));
+                      } else {
+                        // Thêm vào giỏ: đóng modal + snackbar
+                        Get.back();
+                        Get.snackbar(
+                          'Thành công',
+                          'Đã thêm $quantity sản phẩm vào giỏ hàng',
+                          snackPosition: SnackPosition.BOTTOM,
+                        );
+                      }
                     },
-                    child: const Text(
-                      'Thêm vào giỏ hàng',
-                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    child: Text(
+                      buttonText,
+                      style: const TextStyle(fontSize: 16, color: Colors.white),
                     ),
                   ),
                 ),
               ],
             ),
-        ),
+          );
+        },
       ),
     );
   }
+
+
+
+
 }

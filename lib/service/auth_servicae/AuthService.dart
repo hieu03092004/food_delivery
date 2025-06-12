@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:food_delivery/pages/admin_pages/Bottom_nav_admin.dart';
 import 'package:food_delivery/pages/customer_pages/bottom_customer_nav.dart';
 import 'package:food_delivery/pages/shipper_pages/Bottom_nav_shipper.dart';
-import 'package:food_delivery/service/customer_service/Cart/cart_service.dart';
+
+import 'package:food_delivery/service/customer_service/controller_cart.dart';
+import 'package:food_delivery/service/customer_service/controller_order.dart';
 import 'package:get/get.dart';
 import 'package:supabase_auth_ui/supabase_auth_ui.dart';
 
@@ -16,6 +18,7 @@ class AuthService extends GetxController {
   final RxInt accountId = 0.obs;
   final RxString roleName = ''.obs;
   final RxInt storeId = 0.obs;
+  final RxString addressAccount = ''.obs;
 
   @override
   void onInit() {
@@ -31,6 +34,8 @@ class AuthService extends GetxController {
       }
     });
   }
+  /// Lấy address của user từ bảng profiles
+
 
   Future<void> handleSignIn(String userUUID) async {
     print('🔥 HandleSignIn started with UUID: $userUUID');
@@ -49,10 +54,17 @@ class AuthService extends GetxController {
 
       print(' Record: $record');
       print('New Account ID: $newAccountId');
+      final address = await getAddressForUser(newAccountId);
 
       // Cập nhật thông tin account
       accountId.value = newAccountId;
       roleName.value = newRoleName;
+
+      print("tr oi co dia chi di: ${address}");
+      if (address.isNotEmpty) {
+        addressAccount.value = address;
+
+      }
       if (newStoreId != null) {
         storeId.value = newStoreId.toInt();
       }
@@ -64,7 +76,7 @@ class AuthService extends GetxController {
       await _handleFCMToken(newAccountId);
 
       // Reload cart
-      final cartService = Get.find<CartService>();
+      final cartService = Get.find<ControllerCart>();
       await cartService.reload();
 
       // Điều hướng theo role
@@ -132,6 +144,22 @@ class AuthService extends GetxController {
         break;
     }
   }
+  Future<String> getAddressForUser(int accountId) async {
+    try {
+      final result = await _supabase
+          .from('account')
+          .select('address')
+          .eq('account_id', accountId)
+          .maybeSingle();
+
+      // trả về empty string nếu null hoặc không phải String
+      return (result?['address'] as String?) ?? '';
+    } catch (e) {
+      // bạn có thể log lỗi ở đây nếu cần
+      return '';
+    }
+  }
+
 
   Future<void> signOut() async {
     try {
@@ -167,9 +195,19 @@ class AuthService extends GetxController {
     }
 
     // Clear cart nếu có
-    if (Get.isRegistered<CartService>()) {
+    if (Get.isRegistered<ControllerCart>()) {
       try {
-        final cartService = Get.find<CartService>();
+        final cartService = Get.find<ControllerCart>();
+        cartService.reload();
+        update(); // Tạo method này trong CartService nếu chưa có
+      } catch (e) {
+        print('⚠️ Error clearing cart: $e');
+      }
+    }
+    if (Get.isRegistered<ControllerOrder>()) {
+      try {
+        final oderList = Get.find<ControllerOrder>();
+        oderList.reloadAll();
         update(); // Tạo method này trong CartService nếu chưa có
       } catch (e) {
         print('⚠️ Error clearing cart: $e');
